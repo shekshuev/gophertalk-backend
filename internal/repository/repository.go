@@ -22,4 +22,3 @@ type UserRepository interface {
 var ErrNotFound = fmt.Errorf("not found")
 var ErrUserExists = fmt.Errorf("user with same name already exists")
 var ErrNoFieldsToUpdate = fmt.Errorf("no fields to update")
-var ErrPasswordMismatch = fmt.Errorf("password mismatch")

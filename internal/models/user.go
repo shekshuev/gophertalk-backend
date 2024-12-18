@@ -21,10 +21,12 @@ type RegisterUserDTO struct {
 }
 
 type CreateUserDTO struct {
-	UserName     string
-	PasswordHash string
-	FirstName    string
-	LastName     string
+	UserName        string `json:"user_name"`
+	Password        string `json:"password"`
+	PasswordConfirm string `json:"password_confirm"`
+	PasswordHash    string
+	FirstName       string `json:"first_name"`
+	LastName        string `json:"last_name"`
 }
 
 type ReadUserDTO struct {
