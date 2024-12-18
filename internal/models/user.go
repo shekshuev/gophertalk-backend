@@ -2,6 +2,11 @@ package models
 
 import "time"
 
+const (
+	StatusBlocked = iota
+	StatusActive
+)
+
 type LoginUserDTO struct {
 	UserName string `json:"user_name"`
 	Password string `json:"password"`
@@ -30,6 +35,13 @@ type ReadUserDTO struct {
 	Status    int       `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type ReadAuthUserDataDTO struct {
+	ID           int    `json:"id"`
+	UserName     string `json:"user_name"`
+	PasswordHash string `json:"first_name"`
+	Status       int    `json:"status"`
 }
 
 type UpdateUserDTO = CreateUserDTO

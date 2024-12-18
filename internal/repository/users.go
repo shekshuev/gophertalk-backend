@@ -82,6 +82,20 @@ func (r *PostgresUserRepository) GetUserByID(id int) (*models.ReadUserDTO, error
 	return &user, nil
 }
 
+func (r *PostgresUserRepository) GetUserByUserName(userName string) (*models.ReadAuthUserDataDTO, error) {
+	query := `
+		select 
+			id, user_name, password_hash, status 
+		from users where user_name = $1 and deleted_at is null;
+	`
+	var user models.ReadAuthUserDataDTO
+	err := r.db.QueryRow(query, userName).Scan(&user.ID, &user.UserName, &user.PasswordHash, &user.Status)
+	if err == sql.ErrNoRows {
+		return nil, ErrNotFound
+	}
+	return &user, nil
+}
+
 func (r *PostgresUserRepository) UpdateUser(id int, dto models.UpdateUserDTO) (*models.ReadUserDTO, error) {
 	fields := make([]string, 0)
 	args := make([]interface{}, 0)
