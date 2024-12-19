@@ -26,9 +26,6 @@ func (s *UserServiceImpl) GetUserByID(id int) (*models.ReadUserDTO, error) {
 
 func (s *UserServiceImpl) UpdateUser(id int, user models.UpdateUserDTO) (*models.ReadUserDTO, error) {
 	if user.Password != "" {
-		if user.Password != user.PasswordConfirm {
-			return nil, ErrPasswordMismatch
-		}
 		user.PasswordHash = utils.HashPassword(user.Password)
 	}
 	return s.repo.UpdateUser(id, user)

@@ -66,6 +66,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		h.JSONError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write(resp)
 	if err != nil {
 		h.JSONError(w, http.StatusUnauthorized, err.Error())

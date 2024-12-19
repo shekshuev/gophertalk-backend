@@ -18,6 +18,5 @@ type AuthService interface {
 	Register(dto models.RegisterUserDTO) (*models.ReadTokenDTO, error)
 }
 
-var ErrPasswordMismatch = fmt.Errorf("password mismatch")
 var ErrUserNotFound = fmt.Errorf("user not found")
 var ErrWrongPassword = fmt.Errorf("wrong password")

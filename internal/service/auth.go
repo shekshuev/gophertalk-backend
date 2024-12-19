@@ -30,9 +30,6 @@ func (s *AuthServiceImpl) Login(dto models.LoginUserDTO) (*models.ReadTokenDTO, 
 }
 
 func (s *AuthServiceImpl) Register(dto models.RegisterUserDTO) (*models.ReadTokenDTO, error) {
-	if dto.Password != dto.PasswordConfirm {
-		return nil, ErrPasswordMismatch
-	}
 	createDTO := models.CreateUserDTO{
 		UserName:     dto.UserName,
 		PasswordHash: utils.HashPassword(dto.Password),

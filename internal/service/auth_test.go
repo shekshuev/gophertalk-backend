@@ -118,18 +118,6 @@ func TestAuthServiceImpl_Register(t *testing.T) {
 				}, nil)
 			},
 		},
-		{
-			name: "Password mismatch",
-			dto: models.RegisterUserDTO{
-				UserName:        "testuser",
-				Password:        "password123",
-				PasswordConfirm: "password124",
-				FirstName:       "Test",
-				LastName:        "User",
-			},
-			expectedErr: true,
-			mockSet:     func() {},
-		},
 	}
 
 	for _, tc := range testCases {
