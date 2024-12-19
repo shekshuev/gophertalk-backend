@@ -1,8 +1,8 @@
 package models
 
 type LoginUserDTO struct {
-	UserName string `json:"user_name"`
-	Password string `json:"password"`
+	UserName string `json:"user_name" validate:"required,min=5,max=30,alphanumunderscore,startswithalpha"`
+	Password string `json:"password" validate:"required,password"`
 }
 
 type RegisterUserDTO struct {
