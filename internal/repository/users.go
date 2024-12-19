@@ -28,15 +28,14 @@ func NewUserRepositoryImpl(cfg *config.Config) *UserRepositoryImpl {
 	return repository
 }
 
-func (r *UserRepositoryImpl) CreateUser(dto models.CreateUserDTO) (*models.ReadUserDTO, error) {
+func (r *UserRepositoryImpl) CreateUser(dto models.CreateUserDTO) (*models.ReadAuthUserDataDTO, error) {
 	query := `
 		insert into users (user_name, first_name, last_name, password_hash) values ($1, $2, $3, $4)
-		returning id, user_name, first_name, last_name, status, created_at, updated_at;
+		returning id, user_name, password_hash, status;
 	`
-	var user models.ReadUserDTO
+	var user models.ReadAuthUserDataDTO
 	err := r.db.QueryRow(
-		query, dto.UserName, dto.FirstName, dto.LastName, dto.PasswordHash).Scan(
-		&user.ID, &user.UserName, &user.FirstName, &user.LastName, &user.Status, &user.CreatedAt, &user.UpdatedAt)
+		query, dto.UserName, dto.FirstName, dto.LastName, dto.PasswordHash).Scan(&user.ID, &user.UserName, &user.PasswordHash, &user.Status)
 	if err != nil {
 		return nil, err
 	}

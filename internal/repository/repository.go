@@ -14,7 +14,7 @@ type UserRepository interface {
 	GetAllUsers() ([]models.ReadUserDTO, error)
 	GetUserByID(id int) (*models.ReadUserDTO, error)
 	GetUserByUserName(userName string) (*models.ReadAuthUserDataDTO, error)
-	CreateUser(user models.CreateUserDTO) (*models.ReadUserDTO, error)
+	CreateUser(user models.CreateUserDTO) (*models.ReadAuthUserDataDTO, error)
 	UpdateUser(id int, user models.UpdateUserDTO) (*models.ReadUserDTO, error)
 	DeleteUser(id int) error
 }

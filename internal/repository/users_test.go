@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPostgresUserRepository_RegisterUser(t *testing.T) {
+func TestPostgresUserRepository_CreateUser(t *testing.T) {
 	testCases := []struct {
 		name      string
 		createDTO models.CreateUserDTO
-		readDTO   models.ReadUserDTO
+		readDTO   models.ReadAuthUserDataDTO
 		hasError  bool
 	}{
 		{
@@ -27,14 +27,11 @@ func TestPostgresUserRepository_RegisterUser(t *testing.T) {
 				LastName:     "Doe",
 				PasswordHash: "password",
 			},
-			readDTO: models.ReadUserDTO{
-				ID:        1,
-				UserName:  "john",
-				FirstName: "John",
-				LastName:  "Doe",
-				Status:    1,
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
+			readDTO: models.ReadAuthUserDataDTO{
+				ID:           1,
+				UserName:     "john",
+				Status:       1,
+				PasswordHash: "password",
 			},
 			hasError: false,
 		},
@@ -61,7 +58,7 @@ func TestPostgresUserRepository_RegisterUser(t *testing.T) {
 			if !tc.hasError {
 				mock.ExpectQuery(regexp.QuoteMeta(`
 					insert into users (user_name, first_name, last_name, password_hash) values ($1, $2, $3, $4) 
-					returning id, user_name, first_name, last_name, status, created_at, updated_at;
+					returning id, user_name, password_hash, status;
 					`)).
 					WithArgs(
 						tc.createDTO.UserName,
@@ -70,28 +67,25 @@ func TestPostgresUserRepository_RegisterUser(t *testing.T) {
 						tc.createDTO.PasswordHash).
 					WillReturnRows(
 						sqlmock.NewRows(
-							[]string{"id", "user_name", "first_name", "last_name", "status", "created_at", "updated_at"},
+							[]string{"id", "user_name", "password_hash", "status"},
 						).AddRow(
 							tc.readDTO.ID,
 							tc.readDTO.UserName,
-							tc.readDTO.FirstName,
-							tc.readDTO.LastName,
+							tc.readDTO.PasswordHash,
 							tc.readDTO.Status,
-							tc.readDTO.CreatedAt,
-							tc.readDTO.UpdatedAt,
 						),
 					)
 			} else {
 				mock.ExpectQuery(regexp.QuoteMeta(`
 					insert into users (user_name, first_name, last_name, password_hash) values ($1, $2, $3, $4) 
-					returning id, user_name, first_name, last_name, status, created_at, updated_at;
+					returning id, user_name, password_hash, status;
 					`)).
 					WithArgs(
 						tc.createDTO.UserName,
 						tc.createDTO.FirstName,
 						tc.createDTO.LastName,
 						tc.createDTO.PasswordHash).
-					WillReturnError(sql.ErrTxDone)
+					WillReturnError(sql.ErrNoRows)
 			}
 			user, err := r.CreateUser(tc.createDTO)
 			if tc.hasError {

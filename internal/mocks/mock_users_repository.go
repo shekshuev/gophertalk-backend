@@ -35,10 +35,10 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 }
 
 // CreateUser mocks base method.
-func (m *MockUserRepository) CreateUser(arg0 models.CreateUserDTO) (*models.ReadUserDTO, error) {
+func (m *MockUserRepository) CreateUser(arg0 models.CreateUserDTO) (*models.ReadAuthUserDataDTO, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", arg0)
-	ret0, _ := ret[0].(*models.ReadUserDTO)
+	ret0, _ := ret[0].(*models.ReadAuthUserDataDTO)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -109,7 +109,7 @@ func (mr *MockUserRepositoryMockRecorder) GetUserByUserName(arg0 interface{}) *g
 }
 
 // UpdateUser mocks base method.
-func (m *MockUserRepository) UpdateUser(arg0 int, arg1 models.CreateUserDTO) (*models.ReadUserDTO, error) {
+func (m *MockUserRepository) UpdateUser(arg0 int, arg1 models.UpdateUserDTO) (*models.ReadUserDTO, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUser", arg0, arg1)
 	ret0, _ := ret[0].(*models.ReadUserDTO)
