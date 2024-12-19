@@ -11,7 +11,7 @@ type DatabaseChecker interface {
 }
 
 type UserRepository interface {
-	GetAllUsers() ([]models.ReadUserDTO, error)
+	GetAllUsers(limit, offset int) ([]models.ReadUserDTO, error)
 	GetUserByID(id int) (*models.ReadUserDTO, error)
 	GetUserByUserName(userName string) (*models.ReadAuthUserDataDTO, error)
 	CreateUser(user models.CreateUserDTO) (*models.ReadAuthUserDataDTO, error)

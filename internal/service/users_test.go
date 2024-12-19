@@ -56,11 +56,11 @@ func TestUserRepositoryImpl_GetAllUsers(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
-				m.EXPECT().GetAllUsers().Return(tc.readDTOs, nil)
+				m.EXPECT().GetAllUsers(100, 0).Return(tc.readDTOs, nil)
 			} else {
-				m.EXPECT().GetAllUsers().Return(nil, sql.ErrNoRows)
+				m.EXPECT().GetAllUsers(100, 0).Return(nil, sql.ErrNoRows)
 			}
-			users, err := s.GetAllUsers()
+			users, err := s.GetAllUsers(100, 0)
 			if tc.hasError {
 				assert.NotNil(t, err, "Error is nil")
 			} else {

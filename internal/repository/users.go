@@ -42,15 +42,13 @@ func (r *UserRepositoryImpl) CreateUser(dto models.CreateUserDTO) (*models.ReadA
 	return &user, nil
 }
 
-func (r *UserRepositoryImpl) GetAllUsers() ([]models.ReadUserDTO, error) {
+func (r *UserRepositoryImpl) GetAllUsers(limit, offset int) ([]models.ReadUserDTO, error) {
 	query := `
-		select id, user_name, first_name, last_name, status, created_at, updated_at from users;
+		select id, user_name, first_name, last_name, status, created_at, updated_at from users 
+		where deleted_at is null offset $1 limit $2;
 	`
-	var readDTO []models.ReadUserDTO
-	rows, err := r.db.Query(query)
-	if err == sql.ErrNoRows {
-		return nil, ErrNotFound
-	}
+	var readDTO []models.ReadUserDTO = make([]models.ReadUserDTO, 0)
+	rows, err := r.db.Query(query, offset, limit)
 	if err != nil {
 		return nil, err
 	}

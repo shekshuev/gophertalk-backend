@@ -157,14 +157,16 @@ func TestPostgresUserRepository_GetAllUsers(t *testing.T) {
 					rows.AddRow(user.ID, user.UserName, user.FirstName, user.LastName, user.Status, user.CreatedAt, user.UpdatedAt)
 				}
 
-				mock.ExpectQuery(regexp.QuoteMeta(`select id, user_name, first_name, last_name, status, created_at, updated_at from users;`)).
+				mock.ExpectQuery(regexp.QuoteMeta(`select id, user_name, first_name, last_name, status, created_at, updated_at from users where deleted_at is null offset $1 limit $2;`)).
+					WithArgs(0, 100).
 					WillReturnRows(rows)
 			} else {
-				mock.ExpectQuery(regexp.QuoteMeta(`select id, user_name, first_name, last_name, status, created_at, updated_at from users;`)).
+				mock.ExpectQuery(regexp.QuoteMeta(`select id, user_name, first_name, last_name, status, created_at, updated_at from users where deleted_at is null offset $1 limit $2;`)).
+					WithArgs(0, 100).
 					WillReturnError(sql.ErrNoRows)
 			}
 
-			users, err := r.GetAllUsers()
+			users, err := r.GetAllUsers(100, 0)
 			if tc.hasError {
 				assert.NotNil(t, err, "Error is nil")
 			} else {

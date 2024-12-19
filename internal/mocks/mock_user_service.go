@@ -49,18 +49,18 @@ func (mr *MockUserServiceMockRecorder) DeleteUser(arg0 interface{}) *gomock.Call
 }
 
 // GetAllUsers mocks base method.
-func (m *MockUserService) GetAllUsers() ([]models.ReadUserDTO, error) {
+func (m *MockUserService) GetAllUsers(arg0, arg1 int) ([]models.ReadUserDTO, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllUsers")
+	ret := m.ctrl.Call(m, "GetAllUsers", arg0, arg1)
 	ret0, _ := ret[0].([]models.ReadUserDTO)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllUsers indicates an expected call of GetAllUsers.
-func (mr *MockUserServiceMockRecorder) GetAllUsers() *gomock.Call {
+func (mr *MockUserServiceMockRecorder) GetAllUsers(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllUsers", reflect.TypeOf((*MockUserService)(nil).GetAllUsers))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllUsers", reflect.TypeOf((*MockUserService)(nil).GetAllUsers), arg0, arg1)
 }
 
 // GetUserByID mocks base method.
