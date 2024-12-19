@@ -8,14 +8,16 @@ import (
 func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	readDTOs, err := h.users.GetAllUsers()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		h.JSONError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 	resp, err := json.Marshal(readDTOs)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		h.JSONError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 	_, err = w.Write(resp)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		h.JSONError(w, http.StatusBadRequest, err.Error())
 	}
 }

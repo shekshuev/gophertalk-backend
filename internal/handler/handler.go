@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"encoding/json"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -32,4 +35,13 @@ func NewHandler(users service.UserService, auth service.AuthService) *Handler {
 	})
 
 	return h
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+func (h *Handler) JSONError(w http.ResponseWriter, statusCode int, errMessage string) {
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(ErrorResponse{Error: errMessage})
 }
