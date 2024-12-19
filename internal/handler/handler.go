@@ -25,6 +25,7 @@ type ErrorResponse struct {
 }
 
 var ErrValidationError = errors.New("validation error")
+var ErrInvalidID = errors.New("invalid ID")
 
 func NewHandler(users service.UserService, auth service.AuthService) *Handler {
 	router := chi.NewRouter()
@@ -39,6 +40,7 @@ func NewHandler(users service.UserService, auth service.AuthService) *Handler {
 
 	h.Router.Route("/v1.0/users", func(r chi.Router) {
 		r.Get("/", h.GetAllUsers)
+		r.Get("/{id}", h.GetUserByID)
 	})
 
 	h.Router.Route("/v1.0/auth", func(r chi.Router) {

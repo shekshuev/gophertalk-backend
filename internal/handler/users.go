@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
@@ -21,6 +23,28 @@ func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp, err := json.Marshal(readDTOs)
+	if err != nil {
+		h.JSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	_, err = w.Write(resp)
+	if err != nil {
+		h.JSONError(w, http.StatusBadRequest, err.Error())
+	}
+}
+
+func (h *Handler) GetUserByID(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, ErrInvalidID.Error())
+		return
+	}
+	readDTO, err := h.users.GetUserByID(id)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	resp, err := json.Marshal(readDTO)
 	if err != nil {
 		h.JSONError(w, http.StatusBadRequest, err.Error())
 		return
