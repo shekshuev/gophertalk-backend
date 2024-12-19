@@ -2,10 +2,11 @@ package config
 
 import (
 	"flag"
+	"log"
 
 	"github.com/caarlos0/env/v6"
-	"github.com/shekshuev/gophertalk-backend/internal/logger"
-	"go.uber.org/zap"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 type Config struct {
@@ -47,11 +48,10 @@ func parseFlags(cfg *Config) {
 }
 
 func parsEnv(cfg *Config) {
-	l := logger.NewLogger()
 	var envCfg envConfig
 	err := env.Parse(&envCfg)
 	if err != nil {
-		l.Log.Error("Error starting server", zap.Error(err))
+		log.Fatal("Error starting server", err)
 	}
 	if len(envCfg.ServerAddress) > 0 {
 		cfg.ServerAddress = envCfg.ServerAddress

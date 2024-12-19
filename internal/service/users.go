@@ -12,8 +12,8 @@ type UserServiceImpl struct {
 	cfg  *config.Config
 }
 
-func NewUserServiceImpl(repo *repository.UserRepository, cfg *config.Config) *UserServiceImpl {
-	return &UserServiceImpl{repo: *repo, cfg: cfg}
+func NewUserServiceImpl(repo repository.UserRepository, cfg *config.Config) *UserServiceImpl {
+	return &UserServiceImpl{repo: repo, cfg: cfg}
 }
 
 func (s *UserServiceImpl) GetAllUsers() ([]models.ReadUserDTO, error) {

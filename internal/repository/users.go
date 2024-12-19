@@ -2,15 +2,14 @@ package repository
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"database/sql"
 
 	_ "github.com/jackc/pgx/stdlib"
-	"go.uber.org/zap"
 
 	"github.com/shekshuev/gophertalk-backend/internal/config"
-	"github.com/shekshuev/gophertalk-backend/internal/logger"
 	"github.com/shekshuev/gophertalk-backend/internal/models"
 )
 
@@ -19,11 +18,10 @@ type UserRepositoryImpl struct {
 	cfg *config.Config
 }
 
-func NewPostgresUserRepository(cfg *config.Config) *UserRepositoryImpl {
-	log := logger.NewLogger()
+func NewUserRepositoryImpl(cfg *config.Config) *UserRepositoryImpl {
 	db, err := sql.Open("pgx", cfg.DatabaseDSN)
 	if err != nil {
-		log.Log.Error("Error connecting to database", zap.Error(err))
+		log.Fatal("Error connecting to database", err)
 		return nil
 	}
 	repository := &UserRepositoryImpl{cfg: cfg, db: db}

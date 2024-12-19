@@ -7,7 +7,7 @@ import (
 )
 
 type UserService interface {
-	GetAllUsers() []models.ReadUserDTO
+	GetAllUsers() ([]models.ReadUserDTO, error)
 	GetUserByID(id int) (*models.ReadUserDTO, error)
 	UpdateUser(id int, user models.UpdateUserDTO) (*models.ReadUserDTO, error)
 	DeleteUser(id int) error
