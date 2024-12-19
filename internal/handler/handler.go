@@ -43,6 +43,7 @@ func NewHandler(users service.UserService, auth service.AuthService) *Handler {
 
 	h.Router.Route("/v1.0/auth", func(r chi.Router) {
 		r.Post("/login", h.Login)
+		r.Post("/register", h.Register)
 	})
 
 	return h
