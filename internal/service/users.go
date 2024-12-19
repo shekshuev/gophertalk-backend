@@ -16,7 +16,7 @@ func NewUserServiceImpl(repo *repository.UserRepository, cfg *config.Config) *Us
 	return &UserServiceImpl{repo: *repo, cfg: cfg}
 }
 
-func (s *UserServiceImpl) GetAllUsers() []models.ReadUserDTO {
+func (s *UserServiceImpl) GetAllUsers() ([]models.ReadUserDTO, error) {
 	return s.repo.GetAllUsers()
 }
 
