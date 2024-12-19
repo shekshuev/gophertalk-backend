@@ -14,23 +14,23 @@ import (
 	"github.com/shekshuev/gophertalk-backend/internal/models"
 )
 
-type PostgresUserRepository struct {
+type UserRepositoryImpl struct {
 	db  *sql.DB
 	cfg *config.Config
 }
 
-func NewPostgresUserRepository(cfg *config.Config) *PostgresUserRepository {
+func NewPostgresUserRepository(cfg *config.Config) *UserRepositoryImpl {
 	log := logger.NewLogger()
 	db, err := sql.Open("pgx", cfg.DatabaseDSN)
 	if err != nil {
 		log.Log.Error("Error connecting to database", zap.Error(err))
 		return nil
 	}
-	repository := &PostgresUserRepository{cfg: cfg, db: db}
+	repository := &UserRepositoryImpl{cfg: cfg, db: db}
 	return repository
 }
 
-func (r *PostgresUserRepository) CreateUser(dto models.CreateUserDTO) (*models.ReadUserDTO, error) {
+func (r *UserRepositoryImpl) CreateUser(dto models.CreateUserDTO) (*models.ReadUserDTO, error) {
 	query := `
 		insert into users (user_name, first_name, last_name, password_hash) values ($1, $2, $3, $4)
 		returning id, user_name, first_name, last_name, status, created_at, updated_at;
@@ -45,7 +45,7 @@ func (r *PostgresUserRepository) CreateUser(dto models.CreateUserDTO) (*models.R
 	return &user, nil
 }
 
-func (r *PostgresUserRepository) GetAllUsers() ([]models.ReadUserDTO, error) {
+func (r *UserRepositoryImpl) GetAllUsers() ([]models.ReadUserDTO, error) {
 	query := `
 		select id, user_name, first_name, last_name, status, created_at, updated_at from users;
 	`
@@ -68,7 +68,7 @@ func (r *PostgresUserRepository) GetAllUsers() ([]models.ReadUserDTO, error) {
 	return readDTO, nil
 }
 
-func (r *PostgresUserRepository) GetUserByID(id int) (*models.ReadUserDTO, error) {
+func (r *UserRepositoryImpl) GetUserByID(id int) (*models.ReadUserDTO, error) {
 	query := `
 		select 
 			id, user_name, first_name, last_name, status, created_at, updated_at 
@@ -82,7 +82,7 @@ func (r *PostgresUserRepository) GetUserByID(id int) (*models.ReadUserDTO, error
 	return &user, nil
 }
 
-func (r *PostgresUserRepository) GetUserByUserName(userName string) (*models.ReadAuthUserDataDTO, error) {
+func (r *UserRepositoryImpl) GetUserByUserName(userName string) (*models.ReadAuthUserDataDTO, error) {
 	query := `
 		select 
 			id, user_name, password_hash, status 
@@ -96,7 +96,7 @@ func (r *PostgresUserRepository) GetUserByUserName(userName string) (*models.Rea
 	return &user, nil
 }
 
-func (r *PostgresUserRepository) UpdateUser(id int, dto models.UpdateUserDTO) (*models.ReadUserDTO, error) {
+func (r *UserRepositoryImpl) UpdateUser(id int, dto models.UpdateUserDTO) (*models.ReadUserDTO, error) {
 	fields := make([]string, 0)
 	args := make([]interface{}, 0)
 	if dto.PasswordHash != "" {
@@ -135,7 +135,7 @@ func (r *PostgresUserRepository) UpdateUser(id int, dto models.UpdateUserDTO) (*
 	return &user, nil
 }
 
-func (r *PostgresUserRepository) DeleteUser(id int) error {
+func (r *UserRepositoryImpl) DeleteUser(id int) error {
 	query := `
         update users set deleted_at = now() where id = $1;
     `

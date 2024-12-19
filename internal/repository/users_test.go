@@ -55,7 +55,7 @@ func TestPostgresUserRepository_RegisterUser(t *testing.T) {
 		t.Fatalf("Error creating db mock: %v", err)
 	}
 	defer db.Close()
-	r := &PostgresUserRepository{cfg: &cfg, db: db}
+	r := &UserRepositoryImpl{cfg: &cfg, db: db}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
@@ -151,7 +151,7 @@ func TestPostgresUserRepository_GetAllUsers(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := &PostgresUserRepository{cfg: &cfg, db: db}
+	r := &UserRepositoryImpl{cfg: &cfg, db: db}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -221,7 +221,7 @@ func TestPostgresUserRepository_GetUserByID(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := &PostgresUserRepository{cfg: &cfg, db: db}
+	r := &UserRepositoryImpl{cfg: &cfg, db: db}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -290,7 +290,7 @@ func TestPostgresUserRepository_GetUserByUserName(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := &PostgresUserRepository{cfg: &cfg, db: db}
+	r := &UserRepositoryImpl{cfg: &cfg, db: db}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -372,7 +372,7 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := &PostgresUserRepository{cfg: &cfg, db: db}
+	r := &UserRepositoryImpl{cfg: &cfg, db: db}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -438,7 +438,7 @@ func TestPostgresUserRepository_DeleteUser(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := &PostgresUserRepository{cfg: &cfg, db: db}
+	r := &UserRepositoryImpl{cfg: &cfg, db: db}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
