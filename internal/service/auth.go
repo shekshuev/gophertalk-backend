@@ -23,7 +23,7 @@ func (s *AuthServiceImpl) Login(dto models.LoginUserDTO) (*models.ReadTokenDTO, 
 	if err != nil {
 		return nil, ErrUserNotFound
 	}
-	if user.PasswordHash != utils.HashPassword(dto.Password) {
+	if !utils.VerifyPassword(dto.Password, user.PasswordHash) {
 		return nil, ErrWrongPassword
 	}
 	return s.generateTokenPair(*user)
