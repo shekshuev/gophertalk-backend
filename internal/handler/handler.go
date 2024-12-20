@@ -44,10 +44,11 @@ func NewHandler(users service.UserService, auth service.AuthService, cfg *config
 	h.Router.Route("/v1.0/users", func(r chi.Router) {
 		r.Use(middleware.RequestAuth(cfg.AccessTokenSecret))
 		r.Get("/", h.GetAllUsers)
+
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", h.GetUserByID)
-			r.Put("/", h.UpdateUser)
-			r.Delete("/", h.DeleteUserByID)
+			r.With(middleware.RequestAuthSameID(cfg.AccessTokenSecret)).Put("/", h.UpdateUser)
+			r.With(middleware.RequestAuthSameID(cfg.AccessTokenSecret)).Delete("/", h.DeleteUserByID)
 		})
 	})
 
