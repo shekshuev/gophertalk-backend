@@ -40,7 +40,11 @@ func NewHandler(users service.UserService, auth service.AuthService) *Handler {
 
 	h.Router.Route("/v1.0/users", func(r chi.Router) {
 		r.Get("/", h.GetAllUsers)
-		r.Get("/{id}", h.GetUserByID)
+		r.Route("/{id}", func(r chi.Router) {
+			r.Get("/", h.GetUserByID)
+			r.Put("/", h.UpdateUser)
+			r.Delete("/", h.DeleteUserByID)
+		})
 	})
 
 	h.Router.Route("/v1.0/auth", func(r chi.Router) {

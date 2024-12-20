@@ -116,7 +116,7 @@ func (r *UserRepositoryImpl) UpdateUser(id int, dto models.UpdateUserDTO) (*mode
 
 	fields = append(fields, "updated_at = now()")
 
-	query := fmt.Sprintf("update users set %s where id = $%d and deleted_at is null returning *",
+	query := fmt.Sprintf("update users set %s where id = $%d and deleted_at is null returning id, user_name, first_name, last_name, status, created_at, updated_at",
 		strings.Join(fields, ", "), len(args)+1)
 
 	args = append(args, id)
@@ -132,7 +132,7 @@ func (r *UserRepositoryImpl) UpdateUser(id int, dto models.UpdateUserDTO) (*mode
 
 func (r *UserRepositoryImpl) DeleteUser(id int) error {
 	query := `
-        update users set deleted_at = now() where id = $1;
+        update users set deleted_at = now() where id = $1 and deleted_at is null;
     `
 	result, err := r.db.Exec(query, id)
 	if err != nil {

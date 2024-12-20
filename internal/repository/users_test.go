@@ -379,7 +379,7 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 					tc.readDTO.ID, tc.readDTO.UserName, tc.readDTO.FirstName, tc.readDTO.LastName, tc.readDTO.Status, tc.readDTO.CreatedAt, tc.readDTO.UpdatedAt,
 				)
 
-				mock.ExpectQuery(regexp.QuoteMeta(`update users set password_hash = $1, user_name = $2, first_name = $3, last_name = $4, updated_at = now() where id = $5 and deleted_at is null returning *`)).
+				mock.ExpectQuery(regexp.QuoteMeta(`update users set password_hash = $1, user_name = $2, first_name = $3, last_name = $4, updated_at = now() where id = $5 and deleted_at is null returning id, user_name, first_name, last_name, status, created_at, updated_at`)).
 					WithArgs(
 						tc.updateDTO.PasswordHash,
 						tc.updateDTO.UserName,
@@ -388,7 +388,7 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 						tc.id).
 					WillReturnRows(rows)
 			} else {
-				mock.ExpectQuery(regexp.QuoteMeta(`update users set user_name = $1, updated_at = now() where id = $2 and deleted_at is null returning *`)).
+				mock.ExpectQuery(regexp.QuoteMeta(`update users set user_name = $1, updated_at = now() where id = $2 and deleted_at is null returning id, user_name, first_name, last_name, status, created_at, updated_at`)).
 					WithArgs(tc.updateDTO.UserName, tc.id).
 					WillReturnError(sql.ErrNoRows)
 			}
@@ -439,11 +439,11 @@ func TestPostgresUserRepository_DeleteUser(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
-				mock.ExpectExec(regexp.QuoteMeta(`update users set deleted_at = now() where id = $1;`)).
+				mock.ExpectExec(regexp.QuoteMeta(`update users set deleted_at = now() where id = $1 and deleted_at is null;`)).
 					WithArgs(tc.id).
 					WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
-				mock.ExpectExec(regexp.QuoteMeta(`update users set deleted_at = now() where id = $1;`)).
+				mock.ExpectExec(regexp.QuoteMeta(`update users set deleted_at = now() where id = $1 and deleted_at is null;`)).
 					WithArgs(tc.id).
 					WillReturnError(sql.ErrNoRows)
 			}
