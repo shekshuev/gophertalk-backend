@@ -20,7 +20,7 @@ func main() {
 	userRepo := repository.NewUserRepositoryImpl(&cfg)
 	userService := service.NewUserServiceImpl(userRepo, &cfg)
 	authService := service.NewAuthServiceImpl(userRepo, &cfg)
-	userHandler := handler.NewHandler(userService, authService)
+	userHandler := handler.NewHandler(userService, authService, &cfg)
 	server := &http.Server{
 		Addr:    cfg.ServerAddress,
 		Handler: userHandler.Router,

@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -18,12 +19,20 @@ var ErrInvalidSignature = fmt.Errorf("token signature is invalid")
 var ErrTokenExpired = fmt.Errorf("token is expired")
 var ErrTokenInvalid = fmt.Errorf("token is invalid")
 
-func GetAccessTokenCookie(req *http.Request) (string, error) {
-	return getCookieByName(req, AccessTokenCookieName)
+func GetRawAccessToken(req *http.Request) (string, error) {
+	authHeader := req.Header.Get("Authorization")
+	if len(authHeader) == 0 || !strings.HasPrefix(authHeader, "Bearer ") {
+		return "", ErrTokenInvalid
+	}
+	return strings.TrimPrefix(authHeader, "Bearer "), nil
 }
 
-func GetRefreshTokenCookie(req *http.Request) (string, error) {
-	return getCookieByName(req, RefreshTokenCookieName)
+func GetRawRefreshToken(req *http.Request) (string, error) {
+	cookie, err := req.Cookie(RefreshTokenCookieName)
+	if err != nil {
+		return "", err
+	}
+	return cookie.Value, nil
 }
 
 func getCookieByName(req *http.Request, name string) (string, error) {

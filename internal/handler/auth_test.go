@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/golang/mock/gomock"
+	"github.com/shekshuev/gophertalk-backend/internal/config"
 	"github.com/shekshuev/gophertalk-backend/internal/mocks"
 	"github.com/shekshuev/gophertalk-backend/internal/models"
 	"github.com/shekshuev/gophertalk-backend/internal/service"
@@ -17,9 +18,9 @@ import (
 func TestHandler_Login(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	users := mocks.NewMockUserService(ctrl)
 	auth := mocks.NewMockAuthService(ctrl)
-	handler := NewHandler(users, auth)
+	cfg := config.GetConfig()
+	handler := NewHandler(nil, auth, &cfg)
 	httpSrv := httptest.NewServer(handler.Router)
 
 	defer httpSrv.Close()
@@ -92,9 +93,9 @@ func TestHandler_Login(t *testing.T) {
 func TestHandler_Register(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	users := mocks.NewMockUserService(ctrl)
 	auth := mocks.NewMockAuthService(ctrl)
-	handler := NewHandler(users, auth)
+	cfg := config.GetConfig()
+	handler := NewHandler(nil, auth, &cfg)
 	httpSrv := httptest.NewServer(handler.Router)
 
 	defer httpSrv.Close()

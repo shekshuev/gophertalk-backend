@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/golang/mock/gomock"
+	"github.com/shekshuev/gophertalk-backend/internal/config"
 	"github.com/shekshuev/gophertalk-backend/internal/mocks"
 	"github.com/shekshuev/gophertalk-backend/internal/models"
+	"github.com/shekshuev/gophertalk-backend/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +20,17 @@ func TestHandler_GetAllUsers(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	users := mocks.NewMockUserService(ctrl)
-	handler := NewHandler(users, nil)
+	accessTokenSecret := "test"
+	os.Setenv("ACCESS_TOKEN_SECRET", accessTokenSecret)
+	os.Setenv("ACCESS_TOKEN_EXPIRES", "1h")
+	cfg := config.GetConfig()
+	accessToken, err := utils.CreateToken(
+		cfg.AccessTokenSecret,
+		"1",
+		cfg.AccessTokenExpires,
+	)
+	assert.NoError(t, err, "error creating token")
+	handler := NewHandler(users, nil, &cfg)
 	httpSrv := httptest.NewServer(handler.Router)
 	defer httpSrv.Close()
 
@@ -66,6 +79,7 @@ func TestHandler_GetAllUsers(t *testing.T) {
 			}
 
 			req := resty.New().R()
+			req.Header.Set("Authorization", "Bearer "+accessToken)
 			req.Method = http.MethodGet
 			req.URL = httpSrv.URL + "/v1.0/users?limit=" + tc.limit + "&offset=" + tc.offset
 			resp, err := req.Send()
@@ -79,7 +93,17 @@ func TestHandler_GetUserByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	users := mocks.NewMockUserService(ctrl)
-	handler := NewHandler(users, nil)
+	accessTokenSecret := "test"
+	os.Setenv("ACCESS_TOKEN_SECRET", accessTokenSecret)
+	os.Setenv("ACCESS_TOKEN_EXPIRES", "1h")
+	cfg := config.GetConfig()
+	accessToken, err := utils.CreateToken(
+		cfg.AccessTokenSecret,
+		"1",
+		cfg.AccessTokenExpires,
+	)
+	assert.NoError(t, err, "error creating token")
+	handler := NewHandler(users, nil, &cfg)
 	httpSrv := httptest.NewServer(handler.Router)
 	defer httpSrv.Close()
 
@@ -123,6 +147,7 @@ func TestHandler_GetUserByID(t *testing.T) {
 				users.EXPECT().GetUserByID(gomock.Any()).Return(tc.responseDTO, tc.serviceError)
 			}
 			req := resty.New().R()
+			req.Header.Set("Authorization", "Bearer "+accessToken)
 			req.Method = http.MethodGet
 			req.URL = httpSrv.URL + "/v1.0/users/" + tc.userID
 			resp, err := req.Send()
@@ -136,7 +161,17 @@ func TestHandler_DeleteUserByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	users := mocks.NewMockUserService(ctrl)
-	handler := NewHandler(users, nil)
+	accessTokenSecret := "test"
+	os.Setenv("ACCESS_TOKEN_SECRET", accessTokenSecret)
+	os.Setenv("ACCESS_TOKEN_EXPIRES", "1h")
+	cfg := config.GetConfig()
+	accessToken, err := utils.CreateToken(
+		cfg.AccessTokenSecret,
+		"1",
+		cfg.AccessTokenExpires,
+	)
+	assert.NoError(t, err, "error creating token")
+	handler := NewHandler(users, nil, &cfg)
 	httpSrv := httptest.NewServer(handler.Router)
 	defer httpSrv.Close()
 
@@ -176,6 +211,7 @@ func TestHandler_DeleteUserByID(t *testing.T) {
 				users.EXPECT().DeleteUser(gomock.Any()).Return(tc.serviceError)
 			}
 			req := resty.New().R()
+			req.Header.Set("Authorization", "Bearer "+accessToken)
 			req.Method = http.MethodDelete
 			req.URL = httpSrv.URL + "/v1.0/users/" + tc.userID
 			resp, err := req.Send()
@@ -189,7 +225,17 @@ func TestHandler_UpdateUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	users := mocks.NewMockUserService(ctrl)
-	handler := NewHandler(users, nil)
+	accessTokenSecret := "test"
+	os.Setenv("ACCESS_TOKEN_SECRET", accessTokenSecret)
+	os.Setenv("ACCESS_TOKEN_EXPIRES", "1h")
+	cfg := config.GetConfig()
+	accessToken, err := utils.CreateToken(
+		cfg.AccessTokenSecret,
+		"1",
+		cfg.AccessTokenExpires,
+	)
+	assert.NoError(t, err, "error creating token")
+	handler := NewHandler(users, nil, &cfg)
 	httpSrv := httptest.NewServer(handler.Router)
 	defer httpSrv.Close()
 
@@ -247,6 +293,7 @@ func TestHandler_UpdateUser(t *testing.T) {
 			}
 			body, _ := json.Marshal(tc.updateDTO)
 			req := resty.New().R()
+			req.Header.Set("Authorization", "Bearer "+accessToken)
 			req.Method = http.MethodPut
 			req.URL = httpSrv.URL + "/v1.0/users/" + tc.userID
 			resp, err := req.SetBody(body).Send()
