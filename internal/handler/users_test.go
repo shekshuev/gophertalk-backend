@@ -197,11 +197,11 @@ func TestHandler_DeleteUserByID(t *testing.T) {
 			serviceCalled: false,
 		},
 		{
-			name:          "User not found",
-			expectedCode:  http.StatusNotFound,
+			name:          "Not the same user",
+			expectedCode:  http.StatusUnauthorized,
 			userID:        "2",
 			serviceError:  assert.AnError,
-			serviceCalled: true,
+			serviceCalled: false,
 		},
 	}
 
@@ -276,13 +276,13 @@ func TestHandler_UpdateUser(t *testing.T) {
 			serviceCalled: false,
 		},
 		{
-			name:          "User not found",
-			expectedCode:  http.StatusBadRequest,
+			name:          "Not the same user",
+			expectedCode:  http.StatusUnauthorized,
 			userID:        "2",
 			updateDTO:     models.UpdateUserDTO{FirstName: "Updated", LastName: "User"},
 			responseDTO:   nil,
 			serviceError:  assert.AnError,
-			serviceCalled: true,
+			serviceCalled: false,
 		},
 	}
 
