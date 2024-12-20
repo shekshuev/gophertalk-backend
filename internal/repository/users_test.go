@@ -184,7 +184,7 @@ func TestPostgresUserRepository_GetAllUsers(t *testing.T) {
 func TestPostgresUserRepository_GetUserByID(t *testing.T) {
 	testCases := []struct {
 		name     string
-		id       int
+		id       uint64
 		readDTO  *models.ReadUserDTO
 		hasError bool
 	}{
@@ -325,7 +325,7 @@ func TestPostgresUserRepository_GetUserByUserName(t *testing.T) {
 func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 	testCases := []struct {
 		name      string
-		id        int
+		id        uint64
 		updateDTO models.UpdateUserDTO
 		readDTO   *models.ReadUserDTO
 		hasError  bool
@@ -412,7 +412,7 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 func TestPostgresUserRepository_DeleteUser(t *testing.T) {
 	testCases := []struct {
 		name     string
-		id       int
+		id       uint64
 		hasError bool
 	}{
 		{

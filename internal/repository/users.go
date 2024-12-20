@@ -42,7 +42,7 @@ func (r *UserRepositoryImpl) CreateUser(dto models.CreateUserDTO) (*models.ReadA
 	return &user, nil
 }
 
-func (r *UserRepositoryImpl) GetAllUsers(limit, offset int) ([]models.ReadUserDTO, error) {
+func (r *UserRepositoryImpl) GetAllUsers(limit, offset uint64) ([]models.ReadUserDTO, error) {
 	query := `
 		select id, user_name, first_name, last_name, status, created_at, updated_at from users 
 		where deleted_at is null offset $1 limit $2;
@@ -63,7 +63,7 @@ func (r *UserRepositoryImpl) GetAllUsers(limit, offset int) ([]models.ReadUserDT
 	return readDTO, nil
 }
 
-func (r *UserRepositoryImpl) GetUserByID(id int) (*models.ReadUserDTO, error) {
+func (r *UserRepositoryImpl) GetUserByID(id uint64) (*models.ReadUserDTO, error) {
 	query := `
 		select 
 			id, user_name, first_name, last_name, status, created_at, updated_at 
@@ -91,7 +91,7 @@ func (r *UserRepositoryImpl) GetUserByUserName(userName string) (*models.ReadAut
 	return &user, nil
 }
 
-func (r *UserRepositoryImpl) UpdateUser(id int, dto models.UpdateUserDTO) (*models.ReadUserDTO, error) {
+func (r *UserRepositoryImpl) UpdateUser(id uint64, dto models.UpdateUserDTO) (*models.ReadUserDTO, error) {
 	fields := make([]string, 0)
 	args := make([]interface{}, 0)
 	if dto.PasswordHash != "" {
@@ -130,7 +130,7 @@ func (r *UserRepositoryImpl) UpdateUser(id int, dto models.UpdateUserDTO) (*mode
 	return &user, nil
 }
 
-func (r *UserRepositoryImpl) DeleteUser(id int) error {
+func (r *UserRepositoryImpl) DeleteUser(id uint64) error {
 	query := `
         update users set deleted_at = now() where id = $1 and deleted_at is null;
     `

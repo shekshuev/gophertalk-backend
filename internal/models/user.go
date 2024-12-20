@@ -15,20 +15,20 @@ type CreateUserDTO struct {
 }
 
 type ReadUserDTO struct {
-	ID        int       `json:"id"`
+	ID        uint64    `json:"id"`
 	UserName  string    `json:"user_name"`
 	FirstName string    `json:"first_name"`
 	LastName  string    `json:"last_name"`
-	Status    int       `json:"status"`
+	Status    uint8     `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type ReadAuthUserDataDTO struct {
-	ID           int    `json:"id"`
+	ID           uint64 `json:"id"`
 	UserName     string `json:"user_name"`
 	PasswordHash string `json:"first_name"`
-	Status       int    `json:"status"`
+	Status       uint8  `json:"status"`
 }
 
 type UpdateUserDTO struct {

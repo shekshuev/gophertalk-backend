@@ -11,12 +11,19 @@ type DatabaseChecker interface {
 }
 
 type UserRepository interface {
-	GetAllUsers(limit, offset int) ([]models.ReadUserDTO, error)
-	GetUserByID(id int) (*models.ReadUserDTO, error)
+	GetAllUsers(limit, offset uint64) ([]models.ReadUserDTO, error)
+	GetUserByID(id uint64) (*models.ReadUserDTO, error)
 	GetUserByUserName(userName string) (*models.ReadAuthUserDataDTO, error)
 	CreateUser(user models.CreateUserDTO) (*models.ReadAuthUserDataDTO, error)
-	UpdateUser(id int, user models.UpdateUserDTO) (*models.ReadUserDTO, error)
-	DeleteUser(id int) error
+	UpdateUser(id uint64, user models.UpdateUserDTO) (*models.ReadUserDTO, error)
+	DeleteUser(id uint64) error
+}
+
+type PostsRepository interface {
+	GetAllPosts(limit, offset uint64) ([]models.ReadPostDTO, error)
+	GetPostByID(id uint64) (*models.ReadPostDTO, error)
+	CreatePost(post models.CreatePostDTO) (*models.ReadPostDTO, error)
+	DeletePost(id uint64) error
 }
 
 var ErrNotFound = fmt.Errorf("not found")

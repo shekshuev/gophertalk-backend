@@ -46,7 +46,7 @@ func (s *AuthServiceImpl) Register(dto models.RegisterUserDTO) (*models.ReadToke
 func (s *AuthServiceImpl) generateTokenPair(user models.ReadAuthUserDataDTO) (*models.ReadTokenDTO, error) {
 	accessToken, err := utils.CreateToken(
 		s.cfg.AccessTokenSecret,
-		strconv.Itoa(user.ID),
+		strconv.FormatUint(user.ID, 10),
 		s.cfg.AccessTokenExpires,
 	)
 	if err != nil {
@@ -54,7 +54,7 @@ func (s *AuthServiceImpl) generateTokenPair(user models.ReadAuthUserDataDTO) (*m
 	}
 	refreshToken, err := utils.CreateToken(
 		s.cfg.RefreshTokenSecret,
-		strconv.Itoa(user.ID),
+		strconv.FormatUint(user.ID, 10),
 		s.cfg.RefreshTokenExpires,
 	)
 	if err != nil {

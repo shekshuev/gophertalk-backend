@@ -7,10 +7,10 @@ import (
 )
 
 type UserService interface {
-	GetAllUsers(limit, offset int) ([]models.ReadUserDTO, error)
-	GetUserByID(id int) (*models.ReadUserDTO, error)
-	UpdateUser(id int, user models.UpdateUserDTO) (*models.ReadUserDTO, error)
-	DeleteUser(id int) error
+	GetAllUsers(limit, offset uint64) ([]models.ReadUserDTO, error)
+	GetUserByID(id uint64) (*models.ReadUserDTO, error)
+	UpdateUser(id uint64, user models.UpdateUserDTO) (*models.ReadUserDTO, error)
+	DeleteUser(id uint64) error
 }
 
 type AuthService interface {

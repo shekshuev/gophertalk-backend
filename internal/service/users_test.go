@@ -56,11 +56,11 @@ func TestUserRepositoryImpl_GetAllUsers(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
-				m.EXPECT().GetAllUsers(100, 0).Return(tc.readDTOs, nil)
+				m.EXPECT().GetAllUsers(uint64(100), uint64(0)).Return(tc.readDTOs, nil)
 			} else {
-				m.EXPECT().GetAllUsers(100, 0).Return(nil, sql.ErrNoRows)
+				m.EXPECT().GetAllUsers(uint64(100), uint64(0)).Return(nil, sql.ErrNoRows)
 			}
-			users, err := s.GetAllUsers(100, 0)
+			users, err := s.GetAllUsers(uint64(100), uint64(0))
 			if tc.hasError {
 				assert.NotNil(t, err, "Error is nil")
 			} else {
@@ -74,7 +74,7 @@ func TestUserRepositoryImpl_GetAllUsers(t *testing.T) {
 func TestUserRepositoryImpl_GetUserByID(t *testing.T) {
 	testCases := []struct {
 		name     string
-		id       int
+		id       uint64
 		readDTO  *models.ReadUserDTO
 		hasError bool
 	}{
@@ -128,7 +128,7 @@ func TestUserRepositoryImpl_GetUserByID(t *testing.T) {
 func TestUserRepositoryImpl_UpdateUser(t *testing.T) {
 	testCases := []struct {
 		name      string
-		id        int
+		id        uint64
 		updateDTO models.UpdateUserDTO
 		readDTO   *models.ReadUserDTO
 		hasError  bool
@@ -191,7 +191,7 @@ func TestUserRepositoryImpl_UpdateUser(t *testing.T) {
 func TestUserRepositoryImpl_DeleteUser(t *testing.T) {
 	testCases := []struct {
 		name     string
-		id       int
+		id       uint64
 		hasError bool
 	}{
 		{

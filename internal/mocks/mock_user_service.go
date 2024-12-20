@@ -35,7 +35,7 @@ func (m *MockUserService) EXPECT() *MockUserServiceMockRecorder {
 }
 
 // DeleteUser mocks base method.
-func (m *MockUserService) DeleteUser(arg0 int) error {
+func (m *MockUserService) DeleteUser(arg0 uint64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUser", arg0)
 	ret0, _ := ret[0].(error)
@@ -49,7 +49,7 @@ func (mr *MockUserServiceMockRecorder) DeleteUser(arg0 interface{}) *gomock.Call
 }
 
 // GetAllUsers mocks base method.
-func (m *MockUserService) GetAllUsers(arg0, arg1 int) ([]models.ReadUserDTO, error) {
+func (m *MockUserService) GetAllUsers(arg0, arg1 uint64) ([]models.ReadUserDTO, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllUsers", arg0, arg1)
 	ret0, _ := ret[0].([]models.ReadUserDTO)
@@ -64,7 +64,7 @@ func (mr *MockUserServiceMockRecorder) GetAllUsers(arg0, arg1 interface{}) *gomo
 }
 
 // GetUserByID mocks base method.
-func (m *MockUserService) GetUserByID(arg0 int) (*models.ReadUserDTO, error) {
+func (m *MockUserService) GetUserByID(arg0 uint64) (*models.ReadUserDTO, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByID", arg0)
 	ret0, _ := ret[0].(*models.ReadUserDTO)
@@ -79,7 +79,7 @@ func (mr *MockUserServiceMockRecorder) GetUserByID(arg0 interface{}) *gomock.Cal
 }
 
 // UpdateUser mocks base method.
-func (m *MockUserService) UpdateUser(arg0 int, arg1 models.UpdateUserDTO) (*models.ReadUserDTO, error) {
+func (m *MockUserService) UpdateUser(arg0 uint64, arg1 models.UpdateUserDTO) (*models.ReadUserDTO, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUser", arg0, arg1)
 	ret0, _ := ret[0].(*models.ReadUserDTO)
