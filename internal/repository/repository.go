@@ -24,8 +24,13 @@ type PostRepository interface {
 	GetPostByID(id uint64) (*models.ReadPostDTO, error)
 	CreatePost(post models.CreatePostDTO) (*models.ReadPostDTO, error)
 	DeletePost(id, ownerID uint64) error
+	ViewPost(id, viewedByID uint64) error
+	LikePost(id, likedByID uint64) error
+	DislikePost(id, dislikedByID uint64) error
 }
 
 var ErrNotFound = fmt.Errorf("not found")
 var ErrUserExists = fmt.Errorf("user with same name already exists")
 var ErrNoFieldsToUpdate = fmt.Errorf("no fields to update")
+var ErrAlreadyLiked = fmt.Errorf("already liked")
+var ErrAlreadyViewed = fmt.Errorf("already viewed")

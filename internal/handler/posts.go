@@ -125,3 +125,75 @@ func (h *Handler) DeletePostByID(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (h *Handler) ViewPost(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, ErrInvalidID.Error())
+		return
+	}
+	claims, ok := utils.GetClaimsFromContext(r.Context())
+	if !ok {
+		h.JSONError(w, http.StatusUnauthorized, ErrInvalidToken.Error())
+		return
+	}
+	userID, err := strconv.ParseUint(claims.Subject, 10, 64)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, ErrInvalidToken.Error())
+		return
+	}
+	err = h.posts.ViewPost(id, userID)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *Handler) LikePost(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, ErrInvalidID.Error())
+		return
+	}
+	claims, ok := utils.GetClaimsFromContext(r.Context())
+	if !ok {
+		h.JSONError(w, http.StatusUnauthorized, ErrInvalidToken.Error())
+		return
+	}
+	userID, err := strconv.ParseUint(claims.Subject, 10, 64)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, ErrInvalidToken.Error())
+		return
+	}
+	err = h.posts.LikePost(id, userID)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *Handler) DislikePost(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, ErrInvalidID.Error())
+		return
+	}
+	claims, ok := utils.GetClaimsFromContext(r.Context())
+	if !ok {
+		h.JSONError(w, http.StatusUnauthorized, ErrInvalidToken.Error())
+		return
+	}
+	userID, err := strconv.ParseUint(claims.Subject, 10, 64)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, ErrInvalidToken.Error())
+		return
+	}
+	err = h.posts.DislikePost(id, userID)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

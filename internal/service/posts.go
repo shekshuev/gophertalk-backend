@@ -30,3 +30,15 @@ func (s *PostServiceImpl) CreatePost(post models.CreatePostDTO) (*models.ReadPos
 func (s *PostServiceImpl) DeletePost(id, ownerID uint64) error {
 	return s.repo.DeletePost(id, ownerID)
 }
+
+func (s *PostServiceImpl) ViewPost(id, viewedByID uint64) error {
+	return s.repo.ViewPost(id, viewedByID)
+}
+
+func (s *PostServiceImpl) LikePost(id, likedByID uint64) error {
+	return s.repo.LikePost(id, likedByID)
+}
+
+func (s *PostServiceImpl) DislikePost(id, dislikedByID uint64) error {
+	return s.repo.DislikePost(id, dislikedByID)
+}

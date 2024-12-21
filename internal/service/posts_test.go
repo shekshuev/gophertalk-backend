@@ -227,3 +227,120 @@ func TestPostServiceImpl_DeletePost(t *testing.T) {
 		})
 	}
 }
+
+func TestPostServiceImpl_ViewPost(t *testing.T) {
+	testCases := []struct {
+		name     string
+		id       uint64
+		hasError bool
+	}{
+		{
+			name:     "Success view post",
+			id:       1,
+			hasError: false,
+		},
+		{
+			name:     "Error on view",
+			id:       2,
+			hasError: true,
+		},
+	}
+	cfg := config.GetConfig()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	m := mocks.NewMockPostRepository(ctrl)
+	s := &PostServiceImpl{cfg: &cfg, repo: m}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if !tc.hasError {
+				m.EXPECT().ViewPost(tc.id, uint64(0)).Return(nil)
+			} else {
+				m.EXPECT().ViewPost(tc.id, uint64(0)).Return(sql.ErrNoRows)
+			}
+			err := s.ViewPost(tc.id, uint64(0))
+			if tc.hasError {
+				assert.NotNil(t, err, "Error is nil")
+			} else {
+				assert.Nil(t, err, "Error is not nil")
+			}
+		})
+	}
+}
+
+func TestPostServiceImpl_LikePost(t *testing.T) {
+	testCases := []struct {
+		name     string
+		id       uint64
+		hasError bool
+	}{
+		{
+			name:     "Success like post",
+			id:       1,
+			hasError: false,
+		},
+		{
+			name:     "Error on like",
+			id:       2,
+			hasError: true,
+		},
+	}
+	cfg := config.GetConfig()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	m := mocks.NewMockPostRepository(ctrl)
+	s := &PostServiceImpl{cfg: &cfg, repo: m}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if !tc.hasError {
+				m.EXPECT().LikePost(tc.id, uint64(0)).Return(nil)
+			} else {
+				m.EXPECT().LikePost(tc.id, uint64(0)).Return(sql.ErrNoRows)
+			}
+			err := s.LikePost(tc.id, uint64(0))
+			if tc.hasError {
+				assert.NotNil(t, err, "Error is nil")
+			} else {
+				assert.Nil(t, err, "Error is not nil")
+			}
+		})
+	}
+}
+
+func TestPostServiceImpl_DislikePost(t *testing.T) {
+	testCases := []struct {
+		name     string
+		id       uint64
+		hasError bool
+	}{
+		{
+			name:     "Success dislike post",
+			id:       1,
+			hasError: false,
+		},
+		{
+			name:     "Error on dislike",
+			id:       2,
+			hasError: true,
+		},
+	}
+	cfg := config.GetConfig()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	m := mocks.NewMockPostRepository(ctrl)
+	s := &PostServiceImpl{cfg: &cfg, repo: m}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if !tc.hasError {
+				m.EXPECT().DislikePost(tc.id, uint64(0)).Return(nil)
+			} else {
+				m.EXPECT().DislikePost(tc.id, uint64(0)).Return(sql.ErrNoRows)
+			}
+			err := s.DislikePost(tc.id, uint64(0))
+			if tc.hasError {
+				assert.NotNil(t, err, "Error is nil")
+			} else {
+				assert.Nil(t, err, "Error is not nil")
+			}
+		})
+	}
+}

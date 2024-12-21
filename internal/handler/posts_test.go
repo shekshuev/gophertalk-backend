@@ -302,3 +302,174 @@ func TestHandler_DeletePostByID(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_ViewPost(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	posts := mocks.NewMockPostService(ctrl)
+	accessTokenSecret := "test"
+	os.Setenv("ACCESS_TOKEN_SECRET", accessTokenSecret)
+	os.Setenv("ACCESS_TOKEN_EXPIRES", "1h")
+	cfg := config.GetConfig()
+	accessToken, err := utils.CreateToken(
+		cfg.AccessTokenSecret,
+		"1",
+		cfg.AccessTokenExpires,
+	)
+	assert.NoError(t, err, "error creating token")
+	handler := NewHandler(nil, nil, posts, &cfg)
+	httpSrv := httptest.NewServer(handler.Router)
+	defer httpSrv.Close()
+
+	testCases := []struct {
+		name          string
+		expectedCode  int
+		postID        string
+		serviceError  error
+		serviceCalled bool
+	}{
+		{
+			name:          "Success view post",
+			expectedCode:  http.StatusCreated,
+			postID:        "1",
+			serviceError:  nil,
+			serviceCalled: true,
+		},
+		{
+			name:          "Invalid post ID",
+			expectedCode:  http.StatusNotFound,
+			postID:        "abc",
+			serviceError:  nil,
+			serviceCalled: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.serviceCalled {
+				posts.EXPECT().ViewPost(gomock.Any(), uint64(1)).Return(tc.serviceError)
+			}
+			req := resty.New().R()
+			req.Header.Set("Authorization", "Bearer "+accessToken)
+			req.Method = http.MethodPost
+			req.URL = httpSrv.URL + "/v1.0/posts/" + tc.postID + "/view"
+			resp, err := req.Send()
+			assert.NoError(t, err, "error making HTTP request")
+			assert.Equal(t, tc.expectedCode, resp.StatusCode(), "Response code didn't match expected")
+		})
+	}
+}
+
+func TestHandler_LikePost(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	posts := mocks.NewMockPostService(ctrl)
+	accessTokenSecret := "test"
+	os.Setenv("ACCESS_TOKEN_SECRET", accessTokenSecret)
+	os.Setenv("ACCESS_TOKEN_EXPIRES", "1h")
+	cfg := config.GetConfig()
+	accessToken, err := utils.CreateToken(
+		cfg.AccessTokenSecret,
+		"1",
+		cfg.AccessTokenExpires,
+	)
+	assert.NoError(t, err, "error creating token")
+	handler := NewHandler(nil, nil, posts, &cfg)
+	httpSrv := httptest.NewServer(handler.Router)
+	defer httpSrv.Close()
+
+	testCases := []struct {
+		name          string
+		expectedCode  int
+		postID        string
+		serviceError  error
+		serviceCalled bool
+	}{
+		{
+			name:          "Success like post",
+			expectedCode:  http.StatusCreated,
+			postID:        "1",
+			serviceError:  nil,
+			serviceCalled: true,
+		},
+		{
+			name:          "Invalid post ID",
+			expectedCode:  http.StatusNotFound,
+			postID:        "abc",
+			serviceError:  nil,
+			serviceCalled: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.serviceCalled {
+				posts.EXPECT().LikePost(gomock.Any(), uint64(1)).Return(tc.serviceError)
+			}
+			req := resty.New().R()
+			req.Header.Set("Authorization", "Bearer "+accessToken)
+			req.Method = http.MethodPost
+			req.URL = httpSrv.URL + "/v1.0/posts/" + tc.postID + "/like"
+			resp, err := req.Send()
+			assert.NoError(t, err, "error making HTTP request")
+			assert.Equal(t, tc.expectedCode, resp.StatusCode(), "Response code didn't match expected")
+		})
+	}
+}
+
+func TestHandler_DislikePost(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	posts := mocks.NewMockPostService(ctrl)
+	accessTokenSecret := "test"
+	os.Setenv("ACCESS_TOKEN_SECRET", accessTokenSecret)
+	os.Setenv("ACCESS_TOKEN_EXPIRES", "1h")
+	cfg := config.GetConfig()
+	accessToken, err := utils.CreateToken(
+		cfg.AccessTokenSecret,
+		"1",
+		cfg.AccessTokenExpires,
+	)
+	assert.NoError(t, err, "error creating token")
+	handler := NewHandler(nil, nil, posts, &cfg)
+	httpSrv := httptest.NewServer(handler.Router)
+	defer httpSrv.Close()
+
+	testCases := []struct {
+		name          string
+		expectedCode  int
+		postID        string
+		serviceError  error
+		serviceCalled bool
+	}{
+		{
+			name:          "Success dislike post",
+			expectedCode:  http.StatusNoContent,
+			postID:        "1",
+			serviceError:  nil,
+			serviceCalled: true,
+		},
+		{
+			name:          "Invalid post ID",
+			expectedCode:  http.StatusNotFound,
+			postID:        "abc",
+			serviceError:  nil,
+			serviceCalled: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.serviceCalled {
+				posts.EXPECT().DislikePost(gomock.Any(), uint64(1)).Return(tc.serviceError)
+			}
+			req := resty.New().R()
+			req.Header.Set("Authorization", "Bearer "+accessToken)
+			req.Method = http.MethodDelete
+			req.URL = httpSrv.URL + "/v1.0/posts/" + tc.postID + "/like"
+			resp, err := req.Send()
+			assert.NoError(t, err, "error making HTTP request")
+			assert.Equal(t, tc.expectedCode, resp.StatusCode(), "Response code didn't match expected")
+		})
+	}
+}

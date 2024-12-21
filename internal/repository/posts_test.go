@@ -344,3 +344,162 @@ func TestPostRepositoryImpl_DeletePost(t *testing.T) {
 		})
 	}
 }
+
+func TestPostRepositoryImpl_ViewPost(t *testing.T) {
+	testCases := []struct {
+		name     string
+		id       uint64
+		hasError bool
+	}{
+		{
+			name:     "Success view post",
+			id:       1,
+			hasError: false,
+		},
+		{
+			name:     "Error on view SQL",
+			id:       2,
+			hasError: true,
+		},
+	}
+
+	cfg := config.GetConfig()
+	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+	if err != nil {
+		t.Fatalf("Error creating db mock: %v", err)
+	}
+	defer db.Close()
+
+	r := &PostRepositoryImpl{cfg: &cfg, db: db}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if !tc.hasError {
+				mock.ExpectExec(regexp.QuoteMeta(`insert into views (post_id, user_id) values ($1, $2);`)).
+					WithArgs(tc.id, uint64(1)).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			} else {
+				mock.ExpectExec(regexp.QuoteMeta(`insert into views (post_id, user_id) values ($1, $2);`)).
+					WithArgs(tc.id, uint64(1)).
+					WillReturnError(sql.ErrNoRows)
+			}
+
+			err := r.ViewPost(tc.id, uint64(1))
+			if tc.hasError {
+				assert.NotNil(t, err, "Error is nil")
+			} else {
+				assert.Nil(t, err, "Error is not nil")
+			}
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("Not all expectations were met: %v", err)
+			}
+		})
+	}
+}
+
+func TestPostRepositoryImpl_LikePost(t *testing.T) {
+	testCases := []struct {
+		name     string
+		id       uint64
+		hasError bool
+	}{
+		{
+			name:     "Success like post",
+			id:       1,
+			hasError: false,
+		},
+		{
+			name:     "Error on like SQL",
+			id:       2,
+			hasError: true,
+		},
+	}
+
+	cfg := config.GetConfig()
+	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+	if err != nil {
+		t.Fatalf("Error creating db mock: %v", err)
+	}
+	defer db.Close()
+
+	r := &PostRepositoryImpl{cfg: &cfg, db: db}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if !tc.hasError {
+				mock.ExpectExec(regexp.QuoteMeta(`insert into likes (post_id, user_id) values ($1, $2);`)).
+					WithArgs(tc.id, uint64(1)).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			} else {
+				mock.ExpectExec(regexp.QuoteMeta(`insert into likes (post_id, user_id) values ($1, $2);`)).
+					WithArgs(tc.id, uint64(1)).
+					WillReturnError(sql.ErrNoRows)
+			}
+
+			err := r.LikePost(tc.id, uint64(1))
+			if tc.hasError {
+				assert.NotNil(t, err, "Error is nil")
+			} else {
+				assert.Nil(t, err, "Error is not nil")
+			}
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("Not all expectations were met: %v", err)
+			}
+		})
+	}
+}
+
+func TestPostRepositoryImpl_DislikePost(t *testing.T) {
+	testCases := []struct {
+		name     string
+		id       uint64
+		hasError bool
+	}{
+		{
+			name:     "Success dislike post",
+			id:       1,
+			hasError: false,
+		},
+		{
+			name:     "Error on dislike SQL",
+			id:       2,
+			hasError: true,
+		},
+	}
+
+	cfg := config.GetConfig()
+	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+	if err != nil {
+		t.Fatalf("Error creating db mock: %v", err)
+	}
+	defer db.Close()
+
+	r := &PostRepositoryImpl{cfg: &cfg, db: db}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if !tc.hasError {
+				mock.ExpectExec(regexp.QuoteMeta(`delete from likes where post_id = $1 and user_id = $2;`)).
+					WithArgs(tc.id, uint64(1)).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			} else {
+				mock.ExpectExec(regexp.QuoteMeta(`delete from likes where post_id = $1 and user_id = $2;`)).
+					WithArgs(tc.id, uint64(1)).
+					WillReturnError(sql.ErrNoRows)
+			}
+
+			err := r.DislikePost(tc.id, uint64(1))
+			if tc.hasError {
+				assert.NotNil(t, err, "Error is nil")
+			} else {
+				assert.Nil(t, err, "Error is not nil")
+			}
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("Not all expectations were met: %v", err)
+			}
+		})
+	}
+}

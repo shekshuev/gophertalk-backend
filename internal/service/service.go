@@ -23,6 +23,9 @@ type PostService interface {
 	GetPostByID(id uint64) (*models.ReadPostDTO, error)
 	CreatePost(post models.CreatePostDTO) (*models.ReadPostDTO, error)
 	DeletePost(id, ownerID uint64) error
+	ViewPost(id, viewedByID uint64) error
+	LikePost(id, likedByID uint64) error
+	DislikePost(id, dislikedByID uint64) error
 }
 
 var ErrUserNotFound = fmt.Errorf("user not found")

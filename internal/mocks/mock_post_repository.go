@@ -63,6 +63,20 @@ func (mr *MockPostRepositoryMockRecorder) DeletePost(arg0, arg1 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePost", reflect.TypeOf((*MockPostRepository)(nil).DeletePost), arg0, arg1)
 }
 
+// DislikePost mocks base method.
+func (m *MockPostRepository) DislikePost(arg0, arg1 uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DislikePost", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DislikePost indicates an expected call of DislikePost.
+func (mr *MockPostRepositoryMockRecorder) DislikePost(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DislikePost", reflect.TypeOf((*MockPostRepository)(nil).DislikePost), arg0, arg1)
+}
+
 // GetAllPosts mocks base method.
 func (m *MockPostRepository) GetAllPosts(arg0, arg1 uint64) ([]models.ReadPostDTO, error) {
 	m.ctrl.T.Helper()
@@ -91,4 +105,32 @@ func (m *MockPostRepository) GetPostByID(arg0 uint64) (*models.ReadPostDTO, erro
 func (mr *MockPostRepositoryMockRecorder) GetPostByID(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPostByID", reflect.TypeOf((*MockPostRepository)(nil).GetPostByID), arg0)
+}
+
+// LikePost mocks base method.
+func (m *MockPostRepository) LikePost(arg0, arg1 uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LikePost", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LikePost indicates an expected call of LikePost.
+func (mr *MockPostRepositoryMockRecorder) LikePost(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LikePost", reflect.TypeOf((*MockPostRepository)(nil).LikePost), arg0, arg1)
+}
+
+// ViewPost mocks base method.
+func (m *MockPostRepository) ViewPost(arg0, arg1 uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ViewPost", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ViewPost indicates an expected call of ViewPost.
+func (mr *MockPostRepositoryMockRecorder) ViewPost(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ViewPost", reflect.TypeOf((*MockPostRepository)(nil).ViewPost), arg0, arg1)
 }
