@@ -126,12 +126,10 @@ func (r *PostRepositoryImpl) ViewPost(id, viewedByID uint64) error {
     `
 	result, err := r.db.Exec(query, id, viewedByID)
 	if err != nil {
-		if err != nil {
-			if strings.Contains(err.Error(), "pk__views") {
-				return ErrAlreadyViewed
-			} else {
-				return err
-			}
+		if strings.Contains(err.Error(), "pk__views") {
+			return ErrAlreadyViewed
+		} else {
+			return err
 		}
 	}
 	rowsAffected, err := result.RowsAffected()
