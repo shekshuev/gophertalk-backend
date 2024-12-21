@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUserRepositoryImpl_GetAllUsers(t *testing.T) {
+func TestUserServiceImpl_GetAllUsers(t *testing.T) {
 	testCases := []struct {
 		name     string
 		readDTOs []models.ReadUserDTO
@@ -71,7 +71,7 @@ func TestUserRepositoryImpl_GetAllUsers(t *testing.T) {
 	}
 }
 
-func TestUserRepositoryImpl_GetUserByID(t *testing.T) {
+func TestUserServiceImpl_GetUserByID(t *testing.T) {
 	testCases := []struct {
 		name     string
 		id       uint64
@@ -125,7 +125,7 @@ func TestUserRepositoryImpl_GetUserByID(t *testing.T) {
 	}
 }
 
-func TestUserRepositoryImpl_UpdateUser(t *testing.T) {
+func TestUserServiceImpl_UpdateUser(t *testing.T) {
 	testCases := []struct {
 		name      string
 		id        uint64
@@ -188,7 +188,7 @@ func TestUserRepositoryImpl_UpdateUser(t *testing.T) {
 	}
 }
 
-func TestUserRepositoryImpl_DeleteUser(t *testing.T) {
+func TestUserServiceImpl_DeleteUser(t *testing.T) {
 	testCases := []struct {
 		name     string
 		id       uint64

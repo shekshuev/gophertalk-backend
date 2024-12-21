@@ -19,7 +19,7 @@ type UserRepository interface {
 	DeleteUser(id uint64) error
 }
 
-type PostsRepository interface {
+type PostRepository interface {
 	GetAllPosts(limit, offset uint64) ([]models.ReadPostDTO, error)
 	GetPostByID(id uint64) (*models.ReadPostDTO, error)
 	CreatePost(post models.CreatePostDTO) (*models.ReadPostDTO, error)

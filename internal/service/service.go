@@ -18,5 +18,12 @@ type AuthService interface {
 	Register(dto models.RegisterUserDTO) (*models.ReadTokenDTO, error)
 }
 
+type PostService interface {
+	GetAllPosts(limit, offset uint64) ([]models.ReadPostDTO, error)
+	GetPostByID(id uint64) (*models.ReadPostDTO, error)
+	CreatePost(post models.CreatePostDTO) (*models.ReadPostDTO, error)
+	DeletePost(id uint64) error
+}
+
 var ErrUserNotFound = fmt.Errorf("user not found")
 var ErrWrongPassword = fmt.Errorf("wrong password")
