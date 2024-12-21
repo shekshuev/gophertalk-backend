@@ -26,11 +26,11 @@ func NewPostRepositoryImpl(cfg *config.Config) *PostRepositoryImpl {
 func (r *PostRepositoryImpl) CreatePost(dto models.CreatePostDTO) (*models.ReadPostDTO, error) {
 	query := `
 		insert into posts (text, user_id) values ($1, $2)
-		returning id, text, user_id, created_at;
+		returning id, text, created_at;
 	`
 	var post models.ReadPostDTO
 	err := r.db.QueryRow(
-		query, dto.Text, dto.UserID).Scan(&post.ID, &post.Text, &post.UserID, &post.CreatedAt)
+		query, dto.Text, dto.UserID).Scan(&post.ID, &post.Text, &post.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +39,11 @@ func (r *PostRepositoryImpl) CreatePost(dto models.CreatePostDTO) (*models.ReadP
 
 func (r *PostRepositoryImpl) GetAllPosts(limit, offset uint64) ([]models.ReadPostDTO, error) {
 	query := `
-		select id, text, user_id, repost_of_id, created_at from posts 
-		where deleted_at is null offset $1 limit $2;
+		select 
+			p.id, p.text, p.repost_of_id, p.created_at, u.id, u.user_name, u.first_name, u.last_name
+		from posts p
+		join users u on p.user_id = u.id 
+		where p.deleted_at is null offset $1 limit $2;
 	`
 	var readDTOs []models.ReadPostDTO = make([]models.ReadPostDTO, 0)
 	rows, err := r.db.Query(query, offset, limit)
@@ -49,10 +52,21 @@ func (r *PostRepositoryImpl) GetAllPosts(limit, offset uint64) ([]models.ReadPos
 	}
 	for rows.Next() {
 		var postDTO models.ReadPostDTO
-		err := rows.Scan(&postDTO.ID, &postDTO.Text, &postDTO.UserID, &postDTO.RepostOfID, &postDTO.CreatedAt)
+		var userDTO models.ReadPostUserDTO
+		err := rows.Scan(
+			&postDTO.ID,
+			&postDTO.Text,
+			&postDTO.RepostOfID,
+			&postDTO.CreatedAt,
+			&userDTO.ID,
+			&userDTO.UserName,
+			&userDTO.FirstName,
+			&userDTO.LastName,
+		)
 		if err != nil {
 			return nil, err
 		}
+		postDTO.User = &userDTO
 		readDTOs = append(readDTOs, postDTO)
 	}
 	return readDTOs, nil
@@ -61,14 +75,29 @@ func (r *PostRepositoryImpl) GetAllPosts(limit, offset uint64) ([]models.ReadPos
 func (r *PostRepositoryImpl) GetPostByID(id uint64) (*models.ReadPostDTO, error) {
 	query := `
 		select 
-			id, text, user_id, repost_of_id, created_at
-		from posts where id = $1 and deleted_at is null;
+			p.id, p.text, p.repost_of_id, p.created_at, u.id, u.user_name, u.first_name, u.last_name
+		from posts p
+		join users u on p.user_id = u.id
+		where p.id = $1 and p.deleted_at is null;
 	`
 	var postDTO models.ReadPostDTO
-	err := r.db.QueryRow(query, id).Scan(&postDTO.ID, &postDTO.Text, &postDTO.UserID, &postDTO.RepostOfID, &postDTO.CreatedAt)
+	var userDTO models.ReadPostUserDTO
+	err := r.db.QueryRow(query, id).Scan(
+		&postDTO.ID,
+		&postDTO.Text,
+		&postDTO.RepostOfID,
+		&postDTO.CreatedAt,
+		&userDTO.ID,
+		&userDTO.UserName,
+		&userDTO.FirstName,
+		&userDTO.LastName,
+	)
 	if err == sql.ErrNoRows {
 		return nil, ErrNotFound
+	} else if err != nil {
+		return nil, err
 	}
+	postDTO.User = &userDTO
 	return &postDTO, nil
 }
 

@@ -54,25 +54,24 @@ func TestPostRepositoryImpl_CreatePost(t *testing.T) {
 			if !tc.hasError {
 				mock.ExpectQuery(regexp.QuoteMeta(`
 					insert into posts (text, user_id) values ($1, $2)
-					returning id, text, user_id, created_at;
+					returning id, text, created_at;
 					`)).
 					WithArgs(
 						tc.createDTO.Text,
 						tc.createDTO.UserID).
 					WillReturnRows(
 						sqlmock.NewRows(
-							[]string{"id", "text", "user_id", "created_at"},
+							[]string{"id", "text", "created_at"},
 						).AddRow(
 							tc.readDTO.ID,
 							tc.readDTO.Text,
-							tc.readDTO.UserID,
 							tc.readDTO.CreatedAt,
 						),
 					)
 			} else {
 				mock.ExpectQuery(regexp.QuoteMeta(`
 					insert into posts (text, user_id) values ($1, $2)
-					returning id, text, user_id, created_at;
+					returning id, text, created_at;
 					`)).
 					WithArgs(
 						tc.createDTO.Text,
@@ -103,16 +102,26 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 			name: "Success get all posts",
 			readDTOs: []models.ReadPostDTO{
 				{
-					ID:         1,
-					Text:       "Lorem ipsum dolor sit amet, consectetur adipiscing",
-					UserID:     1,
+					ID:   1,
+					Text: "Lorem ipsum dolor sit amet, consectetur adipiscing",
+					User: &models.ReadPostUserDTO{
+						ID:        1,
+						UserName:  "username",
+						FirstName: "first_name",
+						LastName:  "last_name",
+					},
 					RepostOfID: nil,
 					CreatedAt:  time.Now(),
 				},
 				{
-					ID:         2,
-					Text:       "Lorem ipsum dolor sit amet, consectetur adipiscing",
-					UserID:     2,
+					ID:   2,
+					Text: "Lorem ipsum dolor sit amet, consectetur adipiscing",
+					User: &models.ReadPostUserDTO{
+						ID:        1,
+						UserName:  "username",
+						FirstName: "first_name",
+						LastName:  "last_name",
+					},
 					RepostOfID: nil,
 					CreatedAt:  time.Now(),
 				},
@@ -139,17 +148,37 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
 				rows := sqlmock.NewRows([]string{
-					"id", "text", "user_id", "repost_of_id", "created_at",
+					"p.id", "p.text", "p.repost_of_id", "p.created_at", "u.id", "u.user_name", "u.first_name", "u.last_name",
 				})
 				for _, post := range tc.readDTOs {
-					rows.AddRow(post.ID, post.Text, post.UserID, post.RepostOfID, post.CreatedAt)
+					rows.AddRow(
+						post.ID,
+						post.Text,
+						post.RepostOfID,
+						post.CreatedAt,
+						post.User.ID,
+						post.User.UserName,
+						post.User.FirstName,
+						post.User.LastName)
 				}
 
-				mock.ExpectQuery(regexp.QuoteMeta(`select id, text, user_id, repost_of_id, created_at from posts where deleted_at is null offset $1 limit $2;`)).
+				mock.ExpectQuery(regexp.QuoteMeta(`
+				select 
+					p.id, p.text, p.repost_of_id, p.created_at, u.id, u.user_name, u.first_name, u.last_name
+				from posts p
+				join users u on p.user_id = u.id 
+				where p.deleted_at is null offset $1 limit $2;
+				`)).
 					WithArgs(0, 100).
 					WillReturnRows(rows)
 			} else {
-				mock.ExpectQuery(regexp.QuoteMeta(`select id, text, user_id, repost_of_id, created_at from posts where deleted_at is null offset $1 limit $2;`)).
+				mock.ExpectQuery(regexp.QuoteMeta(`
+				select 
+					p.id, p.text, p.repost_of_id, p.created_at, u.id, u.user_name, u.first_name, u.last_name
+				from posts p
+				join users u on p.user_id = u.id 
+				where p.deleted_at is null offset $1 limit $2;
+				`)).
 					WithArgs(0, 100).
 					WillReturnError(sql.ErrNoRows)
 			}
@@ -180,9 +209,14 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 			name: "Success get post by ID",
 			id:   1,
 			readDTO: &models.ReadPostDTO{
-				ID:         1,
-				Text:       "Lorem ipsum dolor sit amet, consectetur adipiscing",
-				UserID:     1,
+				ID:   1,
+				Text: "Lorem ipsum dolor sit amet, consectetur adipiscing",
+				User: &models.ReadPostUserDTO{
+					ID:        1,
+					UserName:  "username",
+					FirstName: "first_name",
+					LastName:  "last_name",
+				},
 				RepostOfID: nil,
 				CreatedAt:  time.Now(),
 			},
@@ -209,16 +243,35 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
 				rows := sqlmock.NewRows([]string{
-					"id", "text", "user_id", "repost_of_id", "created_at",
+					"p.id", "p.text", "p.repost_of_id", "p.created_at", "u.id", "u.user_name", "u.first_name", "u.last_name",
 				}).AddRow(
-					tc.readDTO.ID, tc.readDTO.Text, tc.readDTO.UserID, tc.readDTO.RepostOfID, tc.readDTO.CreatedAt,
+					tc.readDTO.ID,
+					tc.readDTO.Text,
+					tc.readDTO.RepostOfID,
+					tc.readDTO.CreatedAt,
+					tc.readDTO.User.ID,
+					tc.readDTO.User.UserName,
+					tc.readDTO.User.FirstName,
+					tc.readDTO.User.LastName,
 				)
 
-				mock.ExpectQuery(regexp.QuoteMeta(`select id, text, user_id, repost_of_id, created_at from posts where id = $1 and deleted_at is null;`)).
+				mock.ExpectQuery(regexp.QuoteMeta(`
+				select 
+					p.id, p.text, p.repost_of_id, p.created_at, u.id, u.user_name, u.first_name, u.last_name
+				from posts p
+				join users u on p.user_id = u.id
+				where p.id = $1 and p.deleted_at is null;
+				`)).
 					WithArgs(tc.id).
 					WillReturnRows(rows)
 			} else {
-				mock.ExpectQuery(regexp.QuoteMeta(`select id, text, user_id, repost_of_id, created_at from posts where id = $1 and deleted_at is null;`)).
+				mock.ExpectQuery(regexp.QuoteMeta(`
+				select 
+					p.id, p.text, p.repost_of_id, p.created_at, u.id, u.user_name, u.first_name, u.last_name
+				from posts p
+				join users u on p.user_id = u.id
+				where p.id = $1 and p.deleted_at is null;
+				`)).
 					WithArgs(tc.id).
 					WillReturnError(sql.ErrNoRows)
 			}
