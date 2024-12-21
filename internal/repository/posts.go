@@ -72,7 +72,7 @@ func (r *PostRepositoryImpl) GetPostByID(id uint64) (*models.ReadPostDTO, error)
 	return &postDTO, nil
 }
 
-func (r *PostRepositoryImpl) DeleteUser(id uint64) error {
+func (r *PostRepositoryImpl) DeletePost(id uint64) error {
 	query := `
         update posts set deleted_at = now() where id = $1 and deleted_at is null;
     `
