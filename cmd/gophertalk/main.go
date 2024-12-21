@@ -18,9 +18,11 @@ import (
 func main() {
 	cfg := config.GetConfig()
 	userRepo := repository.NewUserRepositoryImpl(&cfg)
+	postRepo := repository.NewPostRepositoryImpl(&cfg)
 	userService := service.NewUserServiceImpl(userRepo, &cfg)
 	authService := service.NewAuthServiceImpl(userRepo, &cfg)
-	userHandler := handler.NewHandler(userService, authService, &cfg)
+	postService := service.NewPostServiceImpl(postRepo, &cfg)
+	userHandler := handler.NewHandler(userService, authService, postService, &cfg)
 	server := &http.Server{
 		Addr:    cfg.ServerAddress,
 		Handler: userHandler.Router,

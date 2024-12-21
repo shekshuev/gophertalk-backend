@@ -20,7 +20,7 @@ func TestHandler_Login(t *testing.T) {
 	defer ctrl.Finish()
 	auth := mocks.NewMockAuthService(ctrl)
 	cfg := config.GetConfig()
-	handler := NewHandler(nil, auth, &cfg)
+	handler := NewHandler(nil, auth, nil, &cfg)
 	httpSrv := httptest.NewServer(handler.Router)
 
 	defer httpSrv.Close()
@@ -95,7 +95,7 @@ func TestHandler_Register(t *testing.T) {
 	defer ctrl.Finish()
 	auth := mocks.NewMockAuthService(ctrl)
 	cfg := config.GetConfig()
-	handler := NewHandler(nil, auth, &cfg)
+	handler := NewHandler(nil, auth, nil, &cfg)
 	httpSrv := httptest.NewServer(handler.Router)
 
 	defer httpSrv.Close()

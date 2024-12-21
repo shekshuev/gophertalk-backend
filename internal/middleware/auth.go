@@ -16,12 +16,13 @@ func RequestAuth(secret string) func(http.Handler) http.Handler {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
-			_, err = utils.GetToken(tokenString, secret)
+			claims, err := utils.GetToken(tokenString, secret)
 			if err != nil {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
-			h.ServeHTTP(w, r)
+			ctx := utils.PutClaimsToContext(r.Context(), *claims)
+			h.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }

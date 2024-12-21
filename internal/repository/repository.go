@@ -23,7 +23,7 @@ type PostRepository interface {
 	GetAllPosts(limit, offset uint64) ([]models.ReadPostDTO, error)
 	GetPostByID(id uint64) (*models.ReadPostDTO, error)
 	CreatePost(post models.CreatePostDTO) (*models.ReadPostDTO, error)
-	DeletePost(id uint64) error
+	DeletePost(id, ownerID uint64) error
 }
 
 var ErrNotFound = fmt.Errorf("not found")

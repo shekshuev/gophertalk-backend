@@ -50,17 +50,17 @@ func (mr *MockPostRepositoryMockRecorder) CreatePost(arg0 interface{}) *gomock.C
 }
 
 // DeletePost mocks base method.
-func (m *MockPostRepository) DeletePost(arg0 uint64) error {
+func (m *MockPostRepository) DeletePost(arg0, arg1 uint64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeletePost", arg0)
+	ret := m.ctrl.Call(m, "DeletePost", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeletePost indicates an expected call of DeletePost.
-func (mr *MockPostRepositoryMockRecorder) DeletePost(arg0 interface{}) *gomock.Call {
+func (mr *MockPostRepositoryMockRecorder) DeletePost(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePost", reflect.TypeOf((*MockPostRepository)(nil).DeletePost), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePost", reflect.TypeOf((*MockPostRepository)(nil).DeletePost), arg0, arg1)
 }
 
 // GetAllPosts mocks base method.

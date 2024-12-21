@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,9 +11,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type ContextKey string
+
 const (
 	AccessTokenCookieName  = "X-Access-Token"
 	RefreshTokenCookieName = "X-Refresh-Token"
+	ContextClaimsKey       = ContextKey("user-claims")
 )
 
 var ErrInvalidSignature = fmt.Errorf("token signature is invalid")
@@ -29,14 +33,6 @@ func GetRawAccessToken(req *http.Request) (string, error) {
 
 func GetRawRefreshToken(req *http.Request) (string, error) {
 	cookie, err := req.Cookie(RefreshTokenCookieName)
-	if err != nil {
-		return "", err
-	}
-	return cookie.Value, nil
-}
-
-func getCookieByName(req *http.Request, name string) (string, error) {
-	cookie, err := req.Cookie(name)
 	if err != nil {
 		return "", err
 	}
@@ -79,4 +75,13 @@ func GetToken(tokenString, secret string) (*jwt.RegisteredClaims, error) {
 		return nil, ErrInvalidSignature
 	}
 	return claims, nil
+}
+
+func GetClaimsFromContext(ctx context.Context) (jwt.RegisteredClaims, bool) {
+	claims, ok := ctx.Value(ContextClaimsKey).(jwt.RegisteredClaims)
+	return claims, ok
+}
+
+func PutClaimsToContext(ctx context.Context, claims jwt.RegisteredClaims) context.Context {
+	return context.WithValue(ctx, ContextClaimsKey, claims)
 }

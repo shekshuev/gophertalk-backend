@@ -28,7 +28,7 @@ func TestPostRepositoryImpl_CreatePost(t *testing.T) {
 			readDTO: models.ReadPostDTO{
 				ID:         1,
 				Text:       "Lorem ipsum dolor sit amet, consectetur adipiscing",
-				RepostOfID: 0,
+				RepostOfID: nil,
 				CreatedAt:  time.Now(),
 			},
 			hasError: false,
@@ -106,14 +106,14 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 					ID:         1,
 					Text:       "Lorem ipsum dolor sit amet, consectetur adipiscing",
 					UserID:     1,
-					RepostOfID: 0,
+					RepostOfID: nil,
 					CreatedAt:  time.Now(),
 				},
 				{
 					ID:         2,
 					Text:       "Lorem ipsum dolor sit amet, consectetur adipiscing",
 					UserID:     2,
-					RepostOfID: 0,
+					RepostOfID: nil,
 					CreatedAt:  time.Now(),
 				},
 			},
@@ -183,7 +183,7 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 				ID:         1,
 				Text:       "Lorem ipsum dolor sit amet, consectetur adipiscing",
 				UserID:     1,
-				RepostOfID: 0,
+				RepostOfID: nil,
 				CreatedAt:  time.Now(),
 			},
 			hasError: false,
@@ -269,16 +269,16 @@ func TestPostRepositoryImpl_DeletePost(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
-				mock.ExpectExec(regexp.QuoteMeta(`update posts set deleted_at = now() where id = $1 and deleted_at is null;`)).
-					WithArgs(tc.id).
+				mock.ExpectExec(regexp.QuoteMeta(`update posts set deleted_at = now() where id = $1 and user_id = $2 and deleted_at is null;`)).
+					WithArgs(tc.id, uint64(1)).
 					WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
-				mock.ExpectExec(regexp.QuoteMeta(`update posts set deleted_at = now() where id = $1 and deleted_at is null;`)).
-					WithArgs(tc.id).
+				mock.ExpectExec(regexp.QuoteMeta(`update posts set deleted_at = now() where id = $1 and user_id = $2 and deleted_at is null;`)).
+					WithArgs(tc.id, uint64(1)).
 					WillReturnError(sql.ErrNoRows)
 			}
 
-			err := r.DeletePost(tc.id)
+			err := r.DeletePost(tc.id, uint64(1))
 			if tc.hasError {
 				assert.NotNil(t, err, "Error is nil")
 			} else {

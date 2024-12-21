@@ -18,6 +18,7 @@ import (
 type Handler struct {
 	users    service.UserService
 	auth     service.AuthService
+	posts    service.PostService
 	Router   *chi.Mux
 	validate *validator.Validate
 	cfg      *config.Config
@@ -29,8 +30,14 @@ type ErrorResponse struct {
 
 var ErrValidationError = errors.New("validation error")
 var ErrInvalidID = errors.New("invalid ID")
+var ErrInvalidToken = errors.New("invalid token")
 
-func NewHandler(users service.UserService, auth service.AuthService, cfg *config.Config) *Handler {
+func NewHandler(
+	users service.UserService,
+	auth service.AuthService,
+	posts service.PostService,
+	cfg *config.Config,
+) *Handler {
 	router := chi.NewRouter()
 	validate := utils.NewValidator()
 	router.Use(chiMiddleware.RequestID)
@@ -39,7 +46,7 @@ func NewHandler(users service.UserService, auth service.AuthService, cfg *config
 	router.Use(chiMiddleware.SetHeader("Content-Type", "application/json"))
 	router.Use(chiMiddleware.Recoverer)
 	router.Use(cors.AllowAll().Handler)
-	h := &Handler{users: users, auth: auth, Router: router, validate: validate, cfg: cfg}
+	h := &Handler{users: users, auth: auth, posts: posts, Router: router, validate: validate, cfg: cfg}
 
 	h.Router.Route("/v1.0/users", func(r chi.Router) {
 		r.Use(middleware.RequestAuth(cfg.AccessTokenSecret))
@@ -49,6 +56,17 @@ func NewHandler(users service.UserService, auth service.AuthService, cfg *config
 			r.Get("/", h.GetUserByID)
 			r.With(middleware.RequestAuthSameID(cfg.AccessTokenSecret)).Put("/", h.UpdateUser)
 			r.With(middleware.RequestAuthSameID(cfg.AccessTokenSecret)).Delete("/", h.DeleteUserByID)
+		})
+	})
+
+	h.Router.Route("/v1.0/posts", func(r chi.Router) {
+		r.Use(middleware.RequestAuth(cfg.AccessTokenSecret))
+		r.Get("/", h.GetAllPosts)
+		r.Post("/", h.CreatePost)
+
+		r.Route("/{id}", func(r chi.Router) {
+			r.Get("/", h.GetPostByID)
+			r.Delete("/", h.DeletePostByID)
 		})
 	})
 

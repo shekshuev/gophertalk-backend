@@ -8,9 +8,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/shekshuev/gophertalk-backend/internal/models"
+	"github.com/shekshuev/gophertalk-backend/internal/utils"
 )
 
-func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	limit, err := strconv.ParseUint(r.URL.Query().Get("limit"), 10, 64)
 	if err != nil {
 		limit = 10
@@ -19,7 +20,7 @@ func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		offset = 0
 	}
-	readDTOs, err := h.users.GetAllUsers(limit, offset)
+	readDTOs, err := h.posts.GetAllPosts(limit, offset)
 	if err != nil {
 		h.JSONError(w, http.StatusBadRequest, err.Error())
 		return
@@ -35,13 +36,13 @@ func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) GetUserByID(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetPostByID(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		h.JSONError(w, http.StatusNotFound, ErrInvalidID.Error())
 		return
 	}
-	readDTO, err := h.users.GetUserByID(id)
+	readDTO, err := h.posts.GetPostByID(id)
 	if err != nil {
 		h.JSONError(w, http.StatusNotFound, err.Error())
 		return
@@ -57,28 +58,34 @@ func (h *Handler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
-	if err != nil {
-		h.JSONError(w, http.StatusNotFound, ErrInvalidID.Error())
-		return
-	}
+func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		h.JSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	var updateDTO models.UpdateUserDTO
-	if err = json.Unmarshal(body, &updateDTO); err != nil {
+	var createDTO models.CreatePostDTO
+	if err = json.Unmarshal(body, &createDTO); err != nil {
 		h.JSONError(w, http.StatusNotFound, ErrInvalidID.Error())
 		return
 	}
-	err = h.validate.Struct(updateDTO)
+	claims, ok := utils.GetClaimsFromContext(r.Context())
+	if !ok {
+		h.JSONError(w, http.StatusUnauthorized, ErrInvalidToken.Error())
+		return
+	}
+	userID, err := strconv.ParseUint(claims.Subject, 10, 64)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, ErrInvalidToken.Error())
+		return
+	}
+	createDTO.UserID = userID
+	err = h.validate.Struct(createDTO)
 	if err != nil {
 		h.JSONError(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
-	readDTO, err := h.users.UpdateUser(id, updateDTO)
+	readDTO, err := h.posts.CreatePost(createDTO)
 	if err != nil {
 		h.JSONError(w, http.StatusBadRequest, err.Error())
 		return
@@ -94,13 +101,23 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) DeleteUserByID(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) DeletePostByID(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		h.JSONError(w, http.StatusNotFound, ErrInvalidID.Error())
 		return
 	}
-	err = h.users.DeleteUser(id)
+	claims, ok := utils.GetClaimsFromContext(r.Context())
+	if !ok {
+		h.JSONError(w, http.StatusUnauthorized, ErrInvalidToken.Error())
+		return
+	}
+	userID, err := strconv.ParseUint(claims.Subject, 10, 64)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, ErrInvalidToken.Error())
+		return
+	}
+	err = h.posts.DeletePost(id, userID)
 	if err != nil {
 		h.JSONError(w, http.StatusNotFound, err.Error())
 		return

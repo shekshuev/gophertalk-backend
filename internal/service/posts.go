@@ -27,6 +27,6 @@ func (s *PostServiceImpl) CreatePost(post models.CreatePostDTO) (*models.ReadPos
 	return s.repo.CreatePost(post)
 }
 
-func (s *PostServiceImpl) DeletePost(id uint64) error {
-	return s.repo.DeletePost(id)
+func (s *PostServiceImpl) DeletePost(id, ownerID uint64) error {
+	return s.repo.DeletePost(id, ownerID)
 }

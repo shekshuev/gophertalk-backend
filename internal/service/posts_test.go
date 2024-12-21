@@ -25,14 +25,14 @@ func TestPostServiceImpl_GetAllPosts(t *testing.T) {
 					ID:         1,
 					Text:       "Lorem ipsum dolor sit amet, consectetur adipiscing",
 					UserID:     1,
-					RepostOfID: 0,
+					RepostOfID: nil,
 					CreatedAt:  time.Now(),
 				},
 				{
 					ID:         2,
 					Text:       "Lorem ipsum dolor sit amet, consectetur adipiscing",
 					UserID:     1,
-					RepostOfID: 0,
+					RepostOfID: nil,
 					CreatedAt:  time.Now(),
 				},
 			},
@@ -81,7 +81,7 @@ func TestPostServiceImpl_GetPostByID(t *testing.T) {
 				ID:         1,
 				Text:       "Lorem ipsum dolor sit amet, consectetur adipiscing",
 				UserID:     1,
-				RepostOfID: 0,
+				RepostOfID: nil,
 				CreatedAt:  time.Now(),
 			},
 			hasError: false,
@@ -135,7 +135,7 @@ func TestPostServiceImpl_CreatePost(t *testing.T) {
 			readDTO: &models.ReadPostDTO{
 				ID:         1,
 				Text:       "Lorem ipsum dolor sit amet, consectetur adipiscing",
-				RepostOfID: 0,
+				RepostOfID: nil,
 				CreatedAt:  time.Now(),
 			},
 			hasError: false,
@@ -199,11 +199,11 @@ func TestPostServiceImpl_DeletePost(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
-				m.EXPECT().DeletePost(tc.id).Return(nil)
+				m.EXPECT().DeletePost(tc.id, uint64(0)).Return(nil)
 			} else {
-				m.EXPECT().DeletePost(tc.id).Return(sql.ErrNoRows)
+				m.EXPECT().DeletePost(tc.id, uint64(0)).Return(sql.ErrNoRows)
 			}
-			err := s.DeletePost(tc.id)
+			err := s.DeletePost(tc.id, uint64(0))
 			if tc.hasError {
 				assert.NotNil(t, err, "Error is nil")
 			} else {
