@@ -95,6 +95,7 @@ func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 		h.JSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write(resp)
 	if err != nil {
 		h.JSONError(w, http.StatusBadRequest, err.Error())
