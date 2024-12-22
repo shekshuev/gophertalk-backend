@@ -95,11 +95,13 @@ func TestPostRepositoryImpl_CreatePost(t *testing.T) {
 func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 	testCases := []struct {
 		name     string
+		userID   uint64
 		readDTOs []models.ReadPostDTO
 		hasError bool
 	}{
 		{
-			name: "Success get all posts",
+			name:   "Success get all posts",
+			userID: 1,
 			readDTOs: []models.ReadPostDTO{
 				{
 					ID:   1,
@@ -112,6 +114,9 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 					},
 					RepostOfID: nil,
 					CreatedAt:  time.Now(),
+					LikesCount: 10,
+					ViewsCount: 100,
+					UserLiked:  true,
 				},
 				{
 					ID:   2,
@@ -124,12 +129,16 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 					},
 					RepostOfID: nil,
 					CreatedAt:  time.Now(),
+					LikesCount: 10,
+					ViewsCount: 100,
+					UserLiked:  true,
 				},
 			},
 			hasError: false,
 		},
 		{
 			name:     "Error on SQL query",
+			userID:   1,
 			readDTOs: nil,
 			hasError: true,
 		},
@@ -144,11 +153,54 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 
 	r := &PostRepositoryImpl{cfg: &cfg, db: db}
 
+	query := regexp.QuoteMeta(`
+	with likes_count AS (
+		select post_id, count(*) as likes_count
+		from likes group by post_id
+	),
+	views_count as (
+		select post_id, count(*) AS views_count
+		from views group by post_id
+	)
+	select 
+		p.id AS post_id,
+		p.text,
+		p.repost_of_id,
+		p.created_at,
+		u.id AS user_id,
+		u.user_name,
+		u.first_name,
+		u.last_name,
+		coalesce(lc.likes_count, 0) AS likes_count,
+		coalesce(vc.views_count, 0) AS views_count,
+		case 
+			when l.user_id is not null then true
+			else false
+		end as user_liked
+	from posts p
+	join users u ON p.user_id = u.id
+	left join likes_count lc ON p.id = lc.post_id
+	left join views_count vc ON p.id = vc.post_id
+	left join likes l on l.post_id = p.id and l.user_id = $1
+	where p.deleted_at is null
+	offset $2 limit $3;
+	`)
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
 				rows := sqlmock.NewRows([]string{
-					"p.id", "p.text", "p.repost_of_id", "p.created_at", "u.id", "u.user_name", "u.first_name", "u.last_name",
+					"p.id",
+					"p.text",
+					"p.repost_of_id",
+					"p.created_at",
+					"u.id",
+					"u.user_name",
+					"u.first_name",
+					"u.last_name",
+					"likes_count",
+					"views_count",
+					"user_liked",
 				})
 				for _, post := range tc.readDTOs {
 					rows.AddRow(
@@ -159,71 +211,22 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 						post.User.ID,
 						post.User.UserName,
 						post.User.FirstName,
-						post.User.LastName)
+						post.User.LastName,
+						post.LikesCount,
+						post.ViewsCount,
+						post.UserLiked)
 				}
 
-				mock.ExpectQuery(regexp.QuoteMeta(`
-				with likes_count AS (
-					select post_id, count(*) as likes_count
-					from likes group by post_id
-				),
-				views_count as (
-					select post_id, count(*) AS views_count
-					from views group by post_id
-				)
-				select 
-					p.id AS post_id,
-					p.text,
-					p.repost_of_id,
-					p.created_at,
-					u.id AS user_id,
-					u.user_name,
-					u.first_name,
-					u.last_name,
-					coalesce(lc.likes_count, 0) AS likes_count,
-					coalesce(vc.views_count, 0) AS views_count
-				from posts p
-				join users u ON p.user_id = u.id
-				left join likes_count lc ON p.id = lc.post_id
-				left join views_count vc ON p.id = vc.post_id
-				where p.deleted_at is null
-				offset $1 limit $2;
-				`)).
-					WithArgs(0, 100).
+				mock.ExpectQuery(query).
+					WithArgs(tc.userID, 0, 100).
 					WillReturnRows(rows)
 			} else {
-				mock.ExpectQuery(regexp.QuoteMeta(`
-				with likes_count AS (
-					select post_id, count(*) as likes_count
-					from likes group by post_id
-				),
-				views_count as (
-					select post_id, count(*) AS views_count
-					from views group by post_id
-				)
-				select 
-					p.id AS post_id,
-					p.text,
-					p.repost_of_id,
-					p.created_at,
-					u.id AS user_id,
-					u.user_name,
-					u.first_name,
-					u.last_name,
-					coalesce(lc.likes_count, 0) AS likes_count,
-					coalesce(vc.views_count, 0) AS views_count
-				from posts p
-				join users u ON p.user_id = u.id
-				left join likes_count lc ON p.id = lc.post_id
-				left join views_count vc ON p.id = vc.post_id
-				where p.deleted_at is null
-				offset $1 limit $2;
-				`)).
-					WithArgs(0, 100).
+				mock.ExpectQuery(query).
+					WithArgs(tc.userID, 0, 100).
 					WillReturnError(sql.ErrNoRows)
 			}
 
-			posts, err := r.GetAllPosts(uint64(100), uint64(0))
+			posts, err := r.GetAllPosts(uint64(100), uint64(0), tc.userID)
 			if tc.hasError {
 				assert.NotNil(t, err, "Error is nil")
 			} else {
@@ -242,12 +245,14 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 	testCases := []struct {
 		name     string
 		id       uint64
+		userID   uint64
 		readDTO  *models.ReadPostDTO
 		hasError bool
 	}{
 		{
-			name: "Success get post by ID",
-			id:   1,
+			name:   "Success get post by ID",
+			id:     1,
+			userID: 1,
 			readDTO: &models.ReadPostDTO{
 				ID:   1,
 				Text: "Lorem ipsum dolor sit amet, consectetur adipiscing",
@@ -259,12 +264,16 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 				},
 				RepostOfID: nil,
 				CreatedAt:  time.Now(),
+				LikesCount: 10,
+				ViewsCount: 100,
+				UserLiked:  true,
 			},
 			hasError: false,
 		},
 		{
-			name:     "User not found",
-			id:       2,
+			name:     "Post not found",
+			id:       1,
+			userID:   1,
 			readDTO:  nil,
 			hasError: true,
 		},
@@ -279,11 +288,53 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 
 	r := &PostRepositoryImpl{cfg: &cfg, db: db}
 
+	query := regexp.QuoteMeta(`
+	with likes_count AS (
+		select post_id, count(*) as likes_count
+		from likes group by post_id
+	),
+	views_count as (
+		select post_id, count(*) AS views_count
+		from views group by post_id
+	)
+	select 
+		p.id AS post_id,
+		p.text,
+		p.repost_of_id,
+		p.created_at,
+		u.id AS user_id,
+		u.user_name,
+		u.first_name,
+		u.last_name,
+		coalesce(lc.likes_count, 0) AS likes_count,
+		coalesce(vc.views_count, 0) AS views_count,
+		case 
+			when l.user_id is not null then true
+			else false
+		end as user_liked
+	from posts p
+	join users u ON p.user_id = u.id
+	left join likes_count lc on p.id = lc.post_id
+	left join views_count vc on p.id = vc.post_id
+	left join likes l on l.post_id = p.id and l.user_id = $1
+	where p.id = $2 and p.deleted_at is null;
+	`)
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
 				rows := sqlmock.NewRows([]string{
-					"p.id", "p.text", "p.repost_of_id", "p.created_at", "u.id", "u.user_name", "u.first_name", "u.last_name",
+					"p.id",
+					"p.text",
+					"p.repost_of_id",
+					"p.created_at",
+					"u.id",
+					"u.user_name",
+					"u.first_name",
+					"u.last_name",
+					"likes_count",
+					"views_count",
+					"user_liked",
 				}).AddRow(
 					tc.readDTO.ID,
 					tc.readDTO.Text,
@@ -293,71 +344,24 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 					tc.readDTO.User.UserName,
 					tc.readDTO.User.FirstName,
 					tc.readDTO.User.LastName,
+					tc.readDTO.LikesCount,
+					tc.readDTO.ViewsCount,
+					tc.readDTO.UserLiked,
 				)
 
-				mock.ExpectQuery(regexp.QuoteMeta(`
-				with likes_count AS (
-					select post_id, count(*) as likes_count
-					from likes group by post_id
-				),
-				views_count as (
-					select post_id, count(*) AS views_count
-					from views group by post_id
-				)
-				select 
-					p.id AS post_id,
-					p.text,
-					p.repost_of_id,
-					p.created_at,
-					u.id AS user_id,
-					u.user_name,
-					u.first_name,
-					u.last_name,
-					coalesce(lc.likes_count, 0) AS likes_count,
-					coalesce(vc.views_count, 0) AS views_count
-				from posts p
-				join users u ON p.user_id = u.id
-				left join likes_count lc ON p.id = lc.post_id
-				left join views_count vc ON p.id = vc.post_id
-				where p.id = $1 and p.deleted_at is null;
-				`)).
-					WithArgs(tc.id).
+				mock.ExpectQuery(query).
+					WithArgs(tc.userID, tc.id).
 					WillReturnRows(rows)
 			} else {
-				mock.ExpectQuery(regexp.QuoteMeta(`
-				with likes_count AS (
-					select post_id, count(*) as likes_count
-					from likes group by post_id
-				),
-				views_count as (
-					select post_id, count(*) AS views_count
-					from views group by post_id
-				)
-				select 
-					p.id AS post_id,
-					p.text,
-					p.repost_of_id,
-					p.created_at,
-					u.id AS user_id,
-					u.user_name,
-					u.first_name,
-					u.last_name,
-					coalesce(lc.likes_count, 0) AS likes_count,
-					coalesce(vc.views_count, 0) AS views_count
-				from posts p
-				join users u ON p.user_id = u.id
-				left join likes_count lc ON p.id = lc.post_id
-				left join views_count vc ON p.id = vc.post_id
-				where p.id = $1 and p.deleted_at is null;
-				`)).
-					WithArgs(tc.id).
+				mock.ExpectQuery(query).
+					WithArgs(tc.userID, tc.id).
 					WillReturnError(sql.ErrNoRows)
 			}
 
-			post, err := r.GetPostByID(tc.id)
+			post, err := r.GetPostByID(tc.userID, tc.id)
 			if tc.hasError {
 				assert.NotNil(t, err, "Error is nil")
-				assert.Nil(t, post, "User should be nil")
+				assert.Nil(t, post, "Post should be nil")
 			} else {
 				assert.Nil(t, err, "Error is not nil")
 				assert.Equal(t, tc.readDTO, post, "Post mismatch")

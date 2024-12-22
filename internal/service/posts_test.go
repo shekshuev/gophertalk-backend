@@ -15,11 +15,13 @@ import (
 func TestPostServiceImpl_GetAllPosts(t *testing.T) {
 	testCases := []struct {
 		name     string
+		userID   uint64
 		readDTOs []models.ReadPostDTO
 		hasError bool
 	}{
 		{
-			name: "Success get all posts",
+			name:   "Success get all posts",
+			userID: 1,
 			readDTOs: []models.ReadPostDTO{
 				{
 					ID:   1,
@@ -50,6 +52,7 @@ func TestPostServiceImpl_GetAllPosts(t *testing.T) {
 		},
 		{
 			name:     "Error on SQL query",
+			userID:   1,
 			readDTOs: nil,
 			hasError: true,
 		},
@@ -62,11 +65,11 @@ func TestPostServiceImpl_GetAllPosts(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
-				m.EXPECT().GetAllPosts(uint64(100), uint64(0)).Return(tc.readDTOs, nil)
+				m.EXPECT().GetAllPosts(uint64(100), uint64(0), tc.userID).Return(tc.readDTOs, nil)
 			} else {
-				m.EXPECT().GetAllPosts(uint64(100), uint64(0)).Return(nil, sql.ErrNoRows)
+				m.EXPECT().GetAllPosts(uint64(100), uint64(0), tc.userID).Return(nil, sql.ErrNoRows)
 			}
-			users, err := s.GetAllPosts(uint64(100), uint64(0))
+			users, err := s.GetAllPosts(uint64(100), uint64(0), tc.userID)
 			if tc.hasError {
 				assert.NotNil(t, err, "Error is nil")
 			} else {
@@ -81,12 +84,14 @@ func TestPostServiceImpl_GetPostByID(t *testing.T) {
 	testCases := []struct {
 		name     string
 		id       uint64
+		userID   uint64
 		readDTO  *models.ReadPostDTO
 		hasError bool
 	}{
 		{
-			name: "Success get post by ID",
-			id:   1,
+			name:   "Success get post by ID",
+			id:     1,
+			userID: 1,
 			readDTO: &models.ReadPostDTO{
 				ID:   1,
 				Text: "Lorem ipsum dolor sit amet, consectetur adipiscing",
@@ -103,7 +108,8 @@ func TestPostServiceImpl_GetPostByID(t *testing.T) {
 		},
 		{
 			name:     "Post not found",
-			id:       2,
+			id:       1,
+			userID:   1,
 			readDTO:  nil,
 			hasError: true,
 		},
@@ -116,12 +122,12 @@ func TestPostServiceImpl_GetPostByID(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
-				m.EXPECT().GetPostByID(tc.id).Return(tc.readDTO, nil)
+				m.EXPECT().GetPostByID(tc.id, tc.userID).Return(tc.readDTO, nil)
 			} else {
-				m.EXPECT().GetPostByID(tc.id).Return(nil, sql.ErrNoRows)
+				m.EXPECT().GetPostByID(tc.id, tc.userID).Return(nil, sql.ErrNoRows)
 			}
 
-			user, err := s.GetPostByID(tc.id)
+			user, err := s.GetPostByID(tc.id, tc.userID)
 			if tc.hasError {
 				assert.NotNil(t, err, "Error is nil")
 				assert.Nil(t, user, "Post should be nil")

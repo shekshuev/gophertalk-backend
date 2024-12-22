@@ -22,4 +22,5 @@ type ReadPostDTO struct {
 	CreatedAt  time.Time        `json:"created_at"`
 	LikesCount uint             `json:"likes_count"`
 	ViewsCount uint             `json:"views_count"`
+	UserLiked  bool             `json:"user_liked"`
 }

@@ -20,8 +20,8 @@ type UserRepository interface {
 }
 
 type PostRepository interface {
-	GetAllPosts(limit, offset uint64) ([]models.ReadPostDTO, error)
-	GetPostByID(id uint64) (*models.ReadPostDTO, error)
+	GetAllPosts(limit, offset, userID uint64) ([]models.ReadPostDTO, error)
+	GetPostByID(id, userID uint64) (*models.ReadPostDTO, error)
 	CreatePost(post models.CreatePostDTO) (*models.ReadPostDTO, error)
 	DeletePost(id, ownerID uint64) error
 	ViewPost(id, viewedByID uint64) error

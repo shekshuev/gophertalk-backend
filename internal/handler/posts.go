@@ -20,7 +20,17 @@ func (h *Handler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		offset = 0
 	}
-	readDTOs, err := h.posts.GetAllPosts(limit, offset)
+	claims, ok := utils.GetClaimsFromContext(r.Context())
+	if !ok {
+		h.JSONError(w, http.StatusUnauthorized, ErrInvalidToken.Error())
+		return
+	}
+	userID, err := strconv.ParseUint(claims.Subject, 10, 64)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, ErrInvalidToken.Error())
+		return
+	}
+	readDTOs, err := h.posts.GetAllPosts(limit, offset, userID)
 	if err != nil {
 		h.JSONError(w, http.StatusBadRequest, err.Error())
 		return
@@ -42,7 +52,17 @@ func (h *Handler) GetPostByID(w http.ResponseWriter, r *http.Request) {
 		h.JSONError(w, http.StatusNotFound, ErrInvalidID.Error())
 		return
 	}
-	readDTO, err := h.posts.GetPostByID(id)
+	claims, ok := utils.GetClaimsFromContext(r.Context())
+	if !ok {
+		h.JSONError(w, http.StatusUnauthorized, ErrInvalidToken.Error())
+		return
+	}
+	userID, err := strconv.ParseUint(claims.Subject, 10, 64)
+	if err != nil {
+		h.JSONError(w, http.StatusNotFound, ErrInvalidToken.Error())
+		return
+	}
+	readDTO, err := h.posts.GetPostByID(id, userID)
 	if err != nil {
 		h.JSONError(w, http.StatusNotFound, err.Error())
 		return

@@ -38,7 +38,7 @@ func (r *PostRepositoryImpl) CreatePost(dto models.CreatePostDTO) (*models.ReadP
 	return &post, nil
 }
 
-func (r *PostRepositoryImpl) GetAllPosts(limit, offset uint64) ([]models.ReadPostDTO, error) {
+func (r *PostRepositoryImpl) GetAllPosts(limit, offset, userID uint64) ([]models.ReadPostDTO, error) {
 	query := `
 		with likes_count AS (
 			select post_id, count(*) as likes_count
@@ -58,16 +58,21 @@ func (r *PostRepositoryImpl) GetAllPosts(limit, offset uint64) ([]models.ReadPos
 			u.first_name,
 			u.last_name,
 			coalesce(lc.likes_count, 0) AS likes_count,
-			coalesce(vc.views_count, 0) AS views_count
+			coalesce(vc.views_count, 0) AS views_count,
+		    case 
+		        when l.user_id is not null then true
+		        else false
+		    end as user_liked
 		from posts p
 		join users u ON p.user_id = u.id
 		left join likes_count lc ON p.id = lc.post_id
 		left join views_count vc ON p.id = vc.post_id
+		left join likes l on l.post_id = p.id and l.user_id = $1
 		where p.deleted_at is null
-		offset $1 limit $2;
+		offset $2 limit $3;
 	`
 	var readDTOs []models.ReadPostDTO = make([]models.ReadPostDTO, 0)
-	rows, err := r.db.Query(query, offset, limit)
+	rows, err := r.db.Query(query, userID, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +90,7 @@ func (r *PostRepositoryImpl) GetAllPosts(limit, offset uint64) ([]models.ReadPos
 			&userDTO.LastName,
 			&postDTO.LikesCount,
 			&postDTO.ViewsCount,
+			&postDTO.UserLiked,
 		)
 		if err != nil {
 			return nil, err
@@ -95,7 +101,7 @@ func (r *PostRepositoryImpl) GetAllPosts(limit, offset uint64) ([]models.ReadPos
 	return readDTOs, nil
 }
 
-func (r *PostRepositoryImpl) GetPostByID(id uint64) (*models.ReadPostDTO, error) {
+func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO, error) {
 	query := `
 		with likes_count AS (
 			select post_id, count(*) as likes_count
@@ -115,16 +121,21 @@ func (r *PostRepositoryImpl) GetPostByID(id uint64) (*models.ReadPostDTO, error)
 			u.first_name,
 			u.last_name,
 			coalesce(lc.likes_count, 0) AS likes_count,
-			coalesce(vc.views_count, 0) AS views_count
+			coalesce(vc.views_count, 0) AS views_count,
+		    case 
+		        when l.user_id is not null then true
+		        else false
+		    end as user_liked
 		from posts p
 		join users u ON p.user_id = u.id
-		left join likes_count lc ON p.id = lc.post_id
-		left join views_count vc ON p.id = vc.post_id
-		where p.id = $1 and p.deleted_at is null;
+		left join likes_count lc on p.id = lc.post_id
+		left join views_count vc on p.id = vc.post_id
+		left join likes l on l.post_id = p.id and l.user_id = $1
+		where p.id = $2 and p.deleted_at is null;
 	`
 	var postDTO models.ReadPostDTO
 	var userDTO models.ReadPostUserDTO
-	err := r.db.QueryRow(query, id).Scan(
+	err := r.db.QueryRow(query, userID, id).Scan(
 		&postDTO.ID,
 		&postDTO.Text,
 		&postDTO.RepostOfID,
@@ -135,6 +146,7 @@ func (r *PostRepositoryImpl) GetPostByID(id uint64) (*models.ReadPostDTO, error)
 		&userDTO.LastName,
 		&postDTO.LikesCount,
 		&postDTO.ViewsCount,
+		&postDTO.UserLiked,
 	)
 	if err == sql.ErrNoRows {
 		return nil, ErrNotFound

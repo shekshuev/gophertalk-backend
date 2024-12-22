@@ -78,33 +78,33 @@ func (mr *MockPostServiceMockRecorder) DislikePost(arg0, arg1 interface{}) *gomo
 }
 
 // GetAllPosts mocks base method.
-func (m *MockPostService) GetAllPosts(arg0, arg1 uint64) ([]models.ReadPostDTO, error) {
+func (m *MockPostService) GetAllPosts(arg0, arg1, arg2 uint64) ([]models.ReadPostDTO, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllPosts", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetAllPosts", arg0, arg1, arg2)
 	ret0, _ := ret[0].([]models.ReadPostDTO)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllPosts indicates an expected call of GetAllPosts.
-func (mr *MockPostServiceMockRecorder) GetAllPosts(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockPostServiceMockRecorder) GetAllPosts(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPosts", reflect.TypeOf((*MockPostService)(nil).GetAllPosts), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPosts", reflect.TypeOf((*MockPostService)(nil).GetAllPosts), arg0, arg1, arg2)
 }
 
 // GetPostByID mocks base method.
-func (m *MockPostService) GetPostByID(arg0 uint64) (*models.ReadPostDTO, error) {
+func (m *MockPostService) GetPostByID(arg0, arg1 uint64) (*models.ReadPostDTO, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPostByID", arg0)
+	ret := m.ctrl.Call(m, "GetPostByID", arg0, arg1)
 	ret0, _ := ret[0].(*models.ReadPostDTO)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPostByID indicates an expected call of GetPostByID.
-func (mr *MockPostServiceMockRecorder) GetPostByID(arg0 interface{}) *gomock.Call {
+func (mr *MockPostServiceMockRecorder) GetPostByID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPostByID", reflect.TypeOf((*MockPostService)(nil).GetPostByID), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPostByID", reflect.TypeOf((*MockPostService)(nil).GetPostByID), arg0, arg1)
 }
 
 // LikePost mocks base method.
