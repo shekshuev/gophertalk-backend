@@ -17,7 +17,7 @@ type ReadPostUserDTO struct {
 type ReadPostDTO struct {
 	ID         uint64           `json:"id"`
 	Text       string           `json:"text"`
-	RepostOfID *uint64          `json:"repost_of_id,omitempty"`
+	ReplyToID  *uint64          `json:"reply_to_id_id,omitempty"`
 	User       *ReadPostUserDTO `json:"user,omitempty"`
 	CreatedAt  time.Time        `json:"created_at"`
 	LikesCount uint             `json:"likes_count"`

@@ -51,7 +51,7 @@ func (r *PostRepositoryImpl) GetAllPosts(limit, offset, userID uint64) ([]models
 		select 
 			p.id AS post_id,
 			p.text,
-			p.repost_of_id,
+			p.reply_to_id,
 			p.created_at,
 			u.id AS user_id,
 			u.user_name,
@@ -82,7 +82,7 @@ func (r *PostRepositoryImpl) GetAllPosts(limit, offset, userID uint64) ([]models
 		err := rows.Scan(
 			&postDTO.ID,
 			&postDTO.Text,
-			&postDTO.RepostOfID,
+			&postDTO.ReplyToID,
 			&postDTO.CreatedAt,
 			&userDTO.ID,
 			&userDTO.UserName,
@@ -114,7 +114,7 @@ func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO
 		select 
 			p.id AS post_id,
 			p.text,
-			p.repost_of_id,
+			p.reply_to_id,
 			p.created_at,
 			u.id AS user_id,
 			u.user_name,
@@ -138,7 +138,7 @@ func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO
 	err := r.db.QueryRow(query, userID, id).Scan(
 		&postDTO.ID,
 		&postDTO.Text,
-		&postDTO.RepostOfID,
+		&postDTO.ReplyToID,
 		&postDTO.CreatedAt,
 		&userDTO.ID,
 		&userDTO.UserName,
