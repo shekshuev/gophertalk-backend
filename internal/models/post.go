@@ -20,4 +20,6 @@ type ReadPostDTO struct {
 	RepostOfID *uint64          `json:"repost_of_id,omitempty"`
 	User       *ReadPostUserDTO `json:"user,omitempty"`
 	CreatedAt  time.Time        `json:"created_at"`
+	LikesCount uint             `json:"likes_count"`
+	ViewsCount uint             `json:"views_count"`
 }

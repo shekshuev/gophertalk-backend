@@ -163,21 +163,61 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 				}
 
 				mock.ExpectQuery(regexp.QuoteMeta(`
+				with likes_count AS (
+					select post_id, count(*) as likes_count
+					from likes group by post_id
+				),
+				views_count as (
+					select post_id, count(*) AS views_count
+					from views group by post_id
+				)
 				select 
-					p.id, p.text, p.repost_of_id, p.created_at, u.id, u.user_name, u.first_name, u.last_name
+					p.id AS post_id,
+					p.text,
+					p.repost_of_id,
+					p.created_at,
+					u.id AS user_id,
+					u.user_name,
+					u.first_name,
+					u.last_name,
+					coalesce(lc.likes_count, 0) AS likes_count,
+					coalesce(vc.views_count, 0) AS views_count
 				from posts p
-				join users u on p.user_id = u.id 
-				where p.deleted_at is null offset $1 limit $2;
+				join users u ON p.user_id = u.id
+				left join likes_count lc ON p.id = lc.post_id
+				left join views_count vc ON p.id = vc.post_id
+				where p.deleted_at is null
+				offset $1 limit $2;
 				`)).
 					WithArgs(0, 100).
 					WillReturnRows(rows)
 			} else {
 				mock.ExpectQuery(regexp.QuoteMeta(`
+				with likes_count AS (
+					select post_id, count(*) as likes_count
+					from likes group by post_id
+				),
+				views_count as (
+					select post_id, count(*) AS views_count
+					from views group by post_id
+				)
 				select 
-					p.id, p.text, p.repost_of_id, p.created_at, u.id, u.user_name, u.first_name, u.last_name
+					p.id AS post_id,
+					p.text,
+					p.repost_of_id,
+					p.created_at,
+					u.id AS user_id,
+					u.user_name,
+					u.first_name,
+					u.last_name,
+					coalesce(lc.likes_count, 0) AS likes_count,
+					coalesce(vc.views_count, 0) AS views_count
 				from posts p
-				join users u on p.user_id = u.id 
-				where p.deleted_at is null offset $1 limit $2;
+				join users u ON p.user_id = u.id
+				left join likes_count lc ON p.id = lc.post_id
+				left join views_count vc ON p.id = vc.post_id
+				where p.deleted_at is null
+				offset $1 limit $2;
 				`)).
 					WithArgs(0, 100).
 					WillReturnError(sql.ErrNoRows)
@@ -256,20 +296,58 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 				)
 
 				mock.ExpectQuery(regexp.QuoteMeta(`
+				with likes_count AS (
+					select post_id, count(*) as likes_count
+					from likes group by post_id
+				),
+				views_count as (
+					select post_id, count(*) AS views_count
+					from views group by post_id
+				)
 				select 
-					p.id, p.text, p.repost_of_id, p.created_at, u.id, u.user_name, u.first_name, u.last_name
+					p.id AS post_id,
+					p.text,
+					p.repost_of_id,
+					p.created_at,
+					u.id AS user_id,
+					u.user_name,
+					u.first_name,
+					u.last_name,
+					coalesce(lc.likes_count, 0) AS likes_count,
+					coalesce(vc.views_count, 0) AS views_count
 				from posts p
-				join users u on p.user_id = u.id
+				join users u ON p.user_id = u.id
+				left join likes_count lc ON p.id = lc.post_id
+				left join views_count vc ON p.id = vc.post_id
 				where p.id = $1 and p.deleted_at is null;
 				`)).
 					WithArgs(tc.id).
 					WillReturnRows(rows)
 			} else {
 				mock.ExpectQuery(regexp.QuoteMeta(`
+				with likes_count AS (
+					select post_id, count(*) as likes_count
+					from likes group by post_id
+				),
+				views_count as (
+					select post_id, count(*) AS views_count
+					from views group by post_id
+				)
 				select 
-					p.id, p.text, p.repost_of_id, p.created_at, u.id, u.user_name, u.first_name, u.last_name
+					p.id AS post_id,
+					p.text,
+					p.repost_of_id,
+					p.created_at,
+					u.id AS user_id,
+					u.user_name,
+					u.first_name,
+					u.last_name,
+					coalesce(lc.likes_count, 0) AS likes_count,
+					coalesce(vc.views_count, 0) AS views_count
 				from posts p
-				join users u on p.user_id = u.id
+				join users u ON p.user_id = u.id
+				left join likes_count lc ON p.id = lc.post_id
+				left join views_count vc ON p.id = vc.post_id
 				where p.id = $1 and p.deleted_at is null;
 				`)).
 					WithArgs(tc.id).
