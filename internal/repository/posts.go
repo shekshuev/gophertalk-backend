@@ -27,12 +27,12 @@ func NewPostRepositoryImpl(cfg *config.Config) *PostRepositoryImpl {
 
 func (r *PostRepositoryImpl) CreatePost(dto models.CreatePostDTO) (*models.ReadPostDTO, error) {
 	query := `
-		insert into posts (text, user_id) values ($1, $2)
-		returning id, text, created_at;
+		insert into posts (text, user_id, reply_to_id) values ($1, $2, $3)
+		returning id, text, created_at, reply_to_id;
 	`
 	var post models.ReadPostDTO
 	err := r.db.QueryRow(
-		query, dto.Text, dto.UserID).Scan(&post.ID, &post.Text, &post.CreatedAt)
+		query, dto.Text, dto.UserID, dto.ReplyToID).Scan(&post.ID, &post.Text, &post.CreatedAt, &post.ReplyToID)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +80,8 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 	if dto.ReplyToID > 0 {
 		query += fmt.Sprintf(" and p.reply_to_id = $%d", len(params)+1)
 		params = append(params, dto.ReplyToID)
+	} else {
+		query += " and p.reply_to_id is null"
 	}
 
 	query += fmt.Sprintf(" offset $%d limit $%d", len(params)+1, len(params)+2)

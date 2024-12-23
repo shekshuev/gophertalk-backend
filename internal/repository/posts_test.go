@@ -22,8 +22,9 @@ func TestPostRepositoryImpl_CreatePost(t *testing.T) {
 		{
 			name: "Success create",
 			createDTO: models.CreatePostDTO{
-				Text:   "Lorem ipsum dolor sit amet, consectetur adipiscing",
-				UserID: 1,
+				Text:      "Lorem ipsum dolor sit amet, consectetur adipiscing",
+				UserID:    1,
+				ReplyToID: nil,
 			},
 			readDTO: models.ReadPostDTO{
 				ID:        1,
@@ -36,8 +37,9 @@ func TestPostRepositoryImpl_CreatePost(t *testing.T) {
 		{
 			name: "Error on insert SQL",
 			createDTO: models.CreatePostDTO{
-				Text:   "Lorem ipsum dolor sit amet, consectetur adipiscing",
-				UserID: 1,
+				Text:      "Lorem ipsum dolor sit amet, consectetur adipiscing",
+				UserID:    1,
+				ReplyToID: nil,
 			},
 			hasError: true,
 		},
@@ -53,29 +55,32 @@ func TestPostRepositoryImpl_CreatePost(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
 				mock.ExpectQuery(regexp.QuoteMeta(`
-					insert into posts (text, user_id) values ($1, $2)
-					returning id, text, created_at;
+					insert into posts (text, user_id, reply_to_id) values ($1, $2, $3)
+					returning id, text, created_at, reply_to_id;
 					`)).
 					WithArgs(
 						tc.createDTO.Text,
-						tc.createDTO.UserID).
+						tc.createDTO.UserID,
+						tc.createDTO.ReplyToID).
 					WillReturnRows(
 						sqlmock.NewRows(
-							[]string{"id", "text", "created_at"},
+							[]string{"id", "text", "created_at", "reply_to_id"},
 						).AddRow(
 							tc.readDTO.ID,
 							tc.readDTO.Text,
 							tc.readDTO.CreatedAt,
+							tc.readDTO.ReplyToID,
 						),
 					)
 			} else {
 				mock.ExpectQuery(regexp.QuoteMeta(`
-					insert into posts (text, user_id) values ($1, $2)
-					returning id, text, created_at;
+					insert into posts (text, user_id, reply_to_id) values ($1, $2, $3)
+					returning id, text, created_at, reply_to_id;
 					`)).
 					WithArgs(
 						tc.createDTO.Text,
-						tc.createDTO.UserID).
+						tc.createDTO.UserID,
+						tc.createDTO.ReplyToID).
 					WillReturnError(sql.ErrNoRows)
 			}
 			post, err := r.CreatePost(tc.createDTO)

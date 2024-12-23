@@ -3,8 +3,9 @@ package models
 import "time"
 
 type CreatePostDTO struct {
-	Text   string `json:"text" validate:"required,min=0,max=280"`
-	UserID uint64
+	Text      string  `json:"text" validate:"required,min=0,max=280"`
+	ReplyToID *uint64 `json:"reply_to_id,omitempty" validate:"omitempty,gt=0"`
+	UserID    uint64
 }
 
 type ReadPostUserDTO struct {
@@ -17,7 +18,7 @@ type ReadPostUserDTO struct {
 type ReadPostDTO struct {
 	ID         uint64           `json:"id"`
 	Text       string           `json:"text"`
-	ReplyToID  *uint64          `json:"reply_to_id_id,omitempty"`
+	ReplyToID  *uint64          `json:"reply_to_id,omitempty"`
 	User       *ReadPostUserDTO `json:"user,omitempty"`
 	CreatedAt  time.Time        `json:"created_at"`
 	LikesCount uint             `json:"likes_count"`
