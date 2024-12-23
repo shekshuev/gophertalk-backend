@@ -102,9 +102,11 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 		{
 			name: "Success get all posts",
 			filterDTO: models.FilterPostDTO{
-				UserID: 1,
-				Limit:  100,
-				Offset: 0,
+				UserID:    1,
+				Limit:     100,
+				Offset:    0,
+				ReplyToID: 1,
+				Search:    "test",
 			},
 			readDTOs: []models.ReadPostDTO{
 				{
@@ -143,9 +145,11 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 		{
 			name: "Error on SQL query",
 			filterDTO: models.FilterPostDTO{
-				UserID: 1,
-				Limit:  100,
-				Offset: 0,
+				UserID:    1,
+				Limit:     100,
+				Offset:    0,
+				ReplyToID: 1,
+				Search:    "test",
 			},
 			readDTOs: nil,
 			hasError: true,
@@ -190,8 +194,8 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 	left join likes_count lc ON p.id = lc.post_id
 	left join views_count vc ON p.id = vc.post_id
 	left join likes l on l.post_id = p.id and l.user_id = $1
-	where p.deleted_at is null
-	offset $2 limit $3;
+	where p.deleted_at is null and p.text ilike $2 and p.reply_to_id = $3
+	offset $4 limit $5
 	`)
 
 	for _, tc := range testCases {
@@ -226,11 +230,11 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 				}
 
 				mock.ExpectQuery(query).
-					WithArgs(tc.filterDTO.UserID, tc.filterDTO.Offset, tc.filterDTO.Limit).
+					WithArgs(tc.filterDTO.UserID, "%"+tc.filterDTO.Search+"%", tc.filterDTO.ReplyToID, tc.filterDTO.Offset, tc.filterDTO.Limit).
 					WillReturnRows(rows)
 			} else {
 				mock.ExpectQuery(query).
-					WithArgs(tc.filterDTO.UserID, tc.filterDTO.Offset, tc.filterDTO.Limit).
+					WithArgs(tc.filterDTO.UserID, "%"+tc.filterDTO.Search+"%", tc.filterDTO.ReplyToID, tc.filterDTO.Offset, tc.filterDTO.Limit).
 					WillReturnError(sql.ErrNoRows)
 			}
 

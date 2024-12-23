@@ -20,6 +20,11 @@ func (h *Handler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		offset = 0
 	}
+	reply_to_id, err := strconv.ParseUint(r.URL.Query().Get("reply_to_id"), 10, 64)
+	if err != nil {
+		reply_to_id = 0
+	}
+
 	claims, ok := utils.GetClaimsFromContext(r.Context())
 	if !ok {
 		h.JSONError(w, http.StatusUnauthorized, ErrInvalidToken.Error())
@@ -31,9 +36,11 @@ func (h *Handler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	filterDTO := models.FilterPostDTO{
-		UserID: userID,
-		Limit:  limit,
-		Offset: offset,
+		UserID:    userID,
+		Limit:     limit,
+		Offset:    offset,
+		ReplyToID: reply_to_id,
+		Search:    r.URL.Query().Get("search"),
 	}
 	readDTOs, err := h.posts.GetAllPosts(filterDTO)
 	if err != nil {

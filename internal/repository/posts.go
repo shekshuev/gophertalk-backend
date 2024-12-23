@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"strings"
 
@@ -69,10 +70,23 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 		left join views_count vc ON p.id = vc.post_id
 		left join likes l on l.post_id = p.id and l.user_id = $1
 		where p.deleted_at is null
-		offset $2 limit $3;
 	`
+	params := []interface{}{dto.UserID}
+	if dto.Search != "" {
+		query += fmt.Sprintf(" and p.text ilike $%d", len(params)+1)
+		params = append(params, "%"+dto.Search+"%")
+	}
+
+	if dto.ReplyToID > 0 {
+		query += fmt.Sprintf(" and p.reply_to_id = $%d", len(params)+1)
+		params = append(params, dto.ReplyToID)
+	}
+
+	query += fmt.Sprintf(" offset $%d limit $%d", len(params)+1, len(params)+2)
+	params = append(params, dto.Offset, dto.Limit)
+
 	var readDTOs []models.ReadPostDTO = make([]models.ReadPostDTO, 0)
-	rows, err := r.db.Query(query, dto.UserID, dto.Offset, dto.Limit)
+	rows, err := r.db.Query(query, params...)
 	if err != nil {
 		return nil, err
 	}
