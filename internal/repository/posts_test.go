@@ -94,14 +94,18 @@ func TestPostRepositoryImpl_CreatePost(t *testing.T) {
 
 func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 	testCases := []struct {
-		name     string
-		userID   uint64
-		readDTOs []models.ReadPostDTO
-		hasError bool
+		name      string
+		filterDTO models.FilterPostDTO
+		readDTOs  []models.ReadPostDTO
+		hasError  bool
 	}{
 		{
-			name:   "Success get all posts",
-			userID: 1,
+			name: "Success get all posts",
+			filterDTO: models.FilterPostDTO{
+				UserID: 1,
+				Limit:  100,
+				Offset: 0,
+			},
 			readDTOs: []models.ReadPostDTO{
 				{
 					ID:   1,
@@ -137,8 +141,12 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 			hasError: false,
 		},
 		{
-			name:     "Error on SQL query",
-			userID:   1,
+			name: "Error on SQL query",
+			filterDTO: models.FilterPostDTO{
+				UserID: 1,
+				Limit:  100,
+				Offset: 0,
+			},
 			readDTOs: nil,
 			hasError: true,
 		},
@@ -218,15 +226,15 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 				}
 
 				mock.ExpectQuery(query).
-					WithArgs(tc.userID, 0, 100).
+					WithArgs(tc.filterDTO.UserID, tc.filterDTO.Offset, tc.filterDTO.Limit).
 					WillReturnRows(rows)
 			} else {
 				mock.ExpectQuery(query).
-					WithArgs(tc.userID, 0, 100).
+					WithArgs(tc.filterDTO.UserID, tc.filterDTO.Offset, tc.filterDTO.Limit).
 					WillReturnError(sql.ErrNoRows)
 			}
 
-			posts, err := r.GetAllPosts(uint64(100), uint64(0), tc.userID)
+			posts, err := r.GetAllPosts(tc.filterDTO)
 			if tc.hasError {
 				assert.NotNil(t, err, "Error is nil")
 			} else {

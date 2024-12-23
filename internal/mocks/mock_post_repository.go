@@ -78,18 +78,18 @@ func (mr *MockPostRepositoryMockRecorder) DislikePost(arg0, arg1 interface{}) *g
 }
 
 // GetAllPosts mocks base method.
-func (m *MockPostRepository) GetAllPosts(arg0, arg1, arg2 uint64) ([]models.ReadPostDTO, error) {
+func (m *MockPostRepository) GetAllPosts(arg0 models.FilterPostDTO) ([]models.ReadPostDTO, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllPosts", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetAllPosts", arg0)
 	ret0, _ := ret[0].([]models.ReadPostDTO)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllPosts indicates an expected call of GetAllPosts.
-func (mr *MockPostRepositoryMockRecorder) GetAllPosts(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockPostRepositoryMockRecorder) GetAllPosts(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPosts", reflect.TypeOf((*MockPostRepository)(nil).GetAllPosts), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPosts", reflect.TypeOf((*MockPostRepository)(nil).GetAllPosts), arg0)
 }
 
 // GetPostByID mocks base method.

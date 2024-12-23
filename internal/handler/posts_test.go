@@ -84,7 +84,7 @@ func TestHandler_GetAllPosts(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.serviceCalled {
-				posts.EXPECT().GetAllPosts(gomock.Any(), gomock.Any(), gomock.Any()).Return(tc.responseDTOs, tc.serviceError)
+				posts.EXPECT().GetAllPosts(gomock.Any()).Return(tc.responseDTOs, tc.serviceError)
 			}
 
 			req := resty.New().R()

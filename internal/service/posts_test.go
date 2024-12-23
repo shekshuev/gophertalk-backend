@@ -14,14 +14,18 @@ import (
 
 func TestPostServiceImpl_GetAllPosts(t *testing.T) {
 	testCases := []struct {
-		name     string
-		userID   uint64
-		readDTOs []models.ReadPostDTO
-		hasError bool
+		name      string
+		filterDTO models.FilterPostDTO
+		readDTOs  []models.ReadPostDTO
+		hasError  bool
 	}{
 		{
-			name:   "Success get all posts",
-			userID: 1,
+			name: "Success get all posts",
+			filterDTO: models.FilterPostDTO{
+				UserID: 1,
+				Limit:  100,
+				Offset: 0,
+			},
 			readDTOs: []models.ReadPostDTO{
 				{
 					ID:   1,
@@ -51,8 +55,12 @@ func TestPostServiceImpl_GetAllPosts(t *testing.T) {
 			hasError: false,
 		},
 		{
-			name:     "Error on SQL query",
-			userID:   1,
+			name: "Error on SQL query",
+			filterDTO: models.FilterPostDTO{
+				UserID: 1,
+				Limit:  100,
+				Offset: 0,
+			},
 			readDTOs: nil,
 			hasError: true,
 		},
@@ -65,11 +73,11 @@ func TestPostServiceImpl_GetAllPosts(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.hasError {
-				m.EXPECT().GetAllPosts(uint64(100), uint64(0), tc.userID).Return(tc.readDTOs, nil)
+				m.EXPECT().GetAllPosts(tc.filterDTO).Return(tc.readDTOs, nil)
 			} else {
-				m.EXPECT().GetAllPosts(uint64(100), uint64(0), tc.userID).Return(nil, sql.ErrNoRows)
+				m.EXPECT().GetAllPosts(tc.filterDTO).Return(nil, sql.ErrNoRows)
 			}
-			users, err := s.GetAllPosts(uint64(100), uint64(0), tc.userID)
+			users, err := s.GetAllPosts(tc.filterDTO)
 			if tc.hasError {
 				assert.NotNil(t, err, "Error is nil")
 			} else {

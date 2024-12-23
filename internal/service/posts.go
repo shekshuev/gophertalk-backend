@@ -15,8 +15,8 @@ func NewPostServiceImpl(repo repository.PostRepository, cfg *config.Config) *Pos
 	return &PostServiceImpl{repo: repo, cfg: cfg}
 }
 
-func (s *PostServiceImpl) GetAllPosts(limit, offset, userID uint64) ([]models.ReadPostDTO, error) {
-	return s.repo.GetAllPosts(limit, offset, userID)
+func (s *PostServiceImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.ReadPostDTO, error) {
+	return s.repo.GetAllPosts(dto)
 }
 
 func (s *PostServiceImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO, error) {

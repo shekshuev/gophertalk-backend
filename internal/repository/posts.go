@@ -38,7 +38,7 @@ func (r *PostRepositoryImpl) CreatePost(dto models.CreatePostDTO) (*models.ReadP
 	return &post, nil
 }
 
-func (r *PostRepositoryImpl) GetAllPosts(limit, offset, userID uint64) ([]models.ReadPostDTO, error) {
+func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.ReadPostDTO, error) {
 	query := `
 		with likes_count AS (
 			select post_id, count(*) as likes_count
@@ -72,7 +72,7 @@ func (r *PostRepositoryImpl) GetAllPosts(limit, offset, userID uint64) ([]models
 		offset $2 limit $3;
 	`
 	var readDTOs []models.ReadPostDTO = make([]models.ReadPostDTO, 0)
-	rows, err := r.db.Query(query, userID, offset, limit)
+	rows, err := r.db.Query(query, dto.UserID, dto.Offset, dto.Limit)
 	if err != nil {
 		return nil, err
 	}

@@ -30,7 +30,12 @@ func (h *Handler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 		h.JSONError(w, http.StatusNotFound, ErrInvalidToken.Error())
 		return
 	}
-	readDTOs, err := h.posts.GetAllPosts(limit, offset, userID)
+	filterDTO := models.FilterPostDTO{
+		UserID: userID,
+		Limit:  limit,
+		Offset: offset,
+	}
+	readDTOs, err := h.posts.GetAllPosts(filterDTO)
 	if err != nil {
 		h.JSONError(w, http.StatusBadRequest, err.Error())
 		return
