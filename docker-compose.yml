@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+    postgres:
+        image: postgres:15
+        container_name: gophertalk_postgres
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        ports:
+            - "${POSTGRES_PORT}:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+    migrate:
+        image: migrate/migrate
+        container_name: gophertalk_migrate
+        environment:
+            GOLANG_MIGRATE_POSTGRESQL_URL: ${GOLANG_MIGRATE_POSTGRESQL_URL}
+        volumes:
+            - ./internal/migrations:/migrations
+        command: ["-path", "/migrations", "-database", "${GOLANG_MIGRATE_POSTGRESQL_URL}", "up"]
+        depends_on:
+            - postgres
+
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: gophertalk_app
+        environment:
+            DATABASE_DSN: ${DATABASE_DSN}
+            SERVER_ADDRESS: 0.0.0.0:3000
+            ACCESS_TOKEN_EXPIRES: ${ACCESS_TOKEN_EXPIRES}
+            REFRESH_TOKEN_EXPIRES: ${REFRESH_TOKEN_EXPIRES}
+            ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET}
+            REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
+        ports:
+            - "3000:3000"
+        depends_on:
+            - migrate
+
+volumes:
+    postgres_data:

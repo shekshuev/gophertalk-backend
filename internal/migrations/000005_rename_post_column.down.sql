@@ -1,0 +1,1 @@
+alter table posts rename column reply_to_id to repost_of_id;
