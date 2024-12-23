@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"log"
+
 	"github.com/dlclark/regexp2"
 
 	"github.com/go-playground/validator/v10"
@@ -8,9 +10,18 @@ import (
 
 func NewValidator() *validator.Validate {
 	validate := validator.New()
-	validate.RegisterValidation("alphanumunderscore", alphanumUnderscore)
-	validate.RegisterValidation("startswithalpha", startsWithAlpha)
-	validate.RegisterValidation("password", passwordValidation)
+	err := validate.RegisterValidation("alphanumunderscore", alphanumUnderscore)
+	if err != nil {
+		log.Fatalf("Error registering validator: %v", err)
+	}
+	err = validate.RegisterValidation("startswithalpha", startsWithAlpha)
+	if err != nil {
+		log.Fatalf("Error registering validator: %v", err)
+	}
+	err = validate.RegisterValidation("password", passwordValidation)
+	if err != nil {
+		log.Fatalf("Error registering validator: %v", err)
+	}
 	return validate
 }
 

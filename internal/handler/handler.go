@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -83,5 +84,8 @@ func NewHandler(
 
 func (h *Handler) JSONError(w http.ResponseWriter, statusCode int, errMessage string) {
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(ErrorResponse{Error: errMessage})
+	err := json.NewEncoder(w).Encode(ErrorResponse{Error: errMessage})
+	if err != nil {
+		log.Fatalf("Error encoding JSON: %v", err)
+	}
 }
