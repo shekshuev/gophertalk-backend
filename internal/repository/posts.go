@@ -84,7 +84,7 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 		query += " and p.reply_to_id is null"
 	}
 
-	query += fmt.Sprintf(" offset $%d limit $%d", len(params)+1, len(params)+2)
+	query += fmt.Sprintf(" order by p.created_at desc offset $%d limit $%d", len(params)+1, len(params)+2)
 	params = append(params, dto.Offset, dto.Limit)
 
 	var readDTOs []models.ReadPostDTO = make([]models.ReadPostDTO, 0)
