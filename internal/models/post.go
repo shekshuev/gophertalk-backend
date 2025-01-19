@@ -24,6 +24,7 @@ type ReadPostDTO struct {
 	LikesCount uint             `json:"likes_count"`
 	ViewsCount uint             `json:"views_count"`
 	UserLiked  bool             `json:"user_liked"`
+	UserViewed bool             `json:"user_viewed"`
 }
 
 type FilterPostDTO struct {

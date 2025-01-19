@@ -128,6 +128,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 					LikesCount: 10,
 					ViewsCount: 100,
 					UserLiked:  true,
+					UserViewed: true,
 				},
 				{
 					ID:   2,
@@ -143,6 +144,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 					LikesCount: 10,
 					ViewsCount: 100,
 					UserLiked:  true,
+					UserViewed: true,
 				},
 			},
 			hasError: false,
@@ -193,12 +195,17 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 		case 
 			when l.user_id is not null then true
 			else false
-		end as user_liked
+		end as user_liked,
+		case 
+			when v.user_id is not null then true
+			else false
+		end as user_viewed
 	from posts p
 	join users u ON p.user_id = u.id
 	left join likes_count lc ON p.id = lc.post_id
 	left join views_count vc ON p.id = vc.post_id
 	left join likes l on l.post_id = p.id and l.user_id = $1
+	left join views v on v.post_id = p.id and v.user_id = $1
 	where p.deleted_at is null and p.text ilike $2 and p.reply_to_id = $3
 	order by p.created_at desc
 	offset $4 limit $5
@@ -219,6 +226,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 					"likes_count",
 					"views_count",
 					"user_liked",
+					"user_viewed",
 				})
 				for _, post := range tc.readDTOs {
 					rows.AddRow(
@@ -232,7 +240,8 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 						post.User.LastName,
 						post.LikesCount,
 						post.ViewsCount,
-						post.UserLiked)
+						post.UserLiked,
+						post.UserViewed)
 				}
 
 				mock.ExpectQuery(query).
@@ -285,6 +294,7 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 				LikesCount: 10,
 				ViewsCount: 100,
 				UserLiked:  true,
+				UserViewed: true,
 			},
 			hasError: false,
 		},
@@ -329,12 +339,17 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 		case 
 			when l.user_id is not null then true
 			else false
-		end as user_liked
+		end as user_liked,
+		case 
+			when v.user_id is not null then true
+			else false
+		end as user_viewed
 	from posts p
 	join users u ON p.user_id = u.id
 	left join likes_count lc on p.id = lc.post_id
 	left join views_count vc on p.id = vc.post_id
 	left join likes l on l.post_id = p.id and l.user_id = $1
+	left join views v on v.post_id = p.id and v.user_id = $1
 	where p.id = $2 and p.deleted_at is null;
 	`)
 
@@ -353,6 +368,7 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 					"likes_count",
 					"views_count",
 					"user_liked",
+					"user_viewed",
 				}).AddRow(
 					tc.readDTO.ID,
 					tc.readDTO.Text,
@@ -365,6 +381,7 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 					tc.readDTO.LikesCount,
 					tc.readDTO.ViewsCount,
 					tc.readDTO.UserLiked,
+					tc.readDTO.UserViewed,
 				)
 
 				mock.ExpectQuery(query).

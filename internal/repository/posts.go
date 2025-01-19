@@ -63,12 +63,17 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 		    case 
 		        when l.user_id is not null then true
 		        else false
-		    end as user_liked
+		    end as user_liked,
+			case 
+		        when v.user_id is not null then true
+		        else false
+		    end as user_viewed
 		from posts p
 		join users u ON p.user_id = u.id
 		left join likes_count lc ON p.id = lc.post_id
 		left join views_count vc ON p.id = vc.post_id
 		left join likes l on l.post_id = p.id and l.user_id = $1
+		left join views v on v.post_id = p.id and v.user_id = $1
 		where p.deleted_at is null
 	`
 	params := []interface{}{dto.UserID}
@@ -107,6 +112,7 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 			&postDTO.LikesCount,
 			&postDTO.ViewsCount,
 			&postDTO.UserLiked,
+			&postDTO.UserViewed,
 		)
 		if err != nil {
 			return nil, err
@@ -141,12 +147,17 @@ func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO
 		    case 
 		        when l.user_id is not null then true
 		        else false
-		    end as user_liked
+		    end as user_liked,
+			case 
+		        when v.user_id is not null then true
+		        else false
+		    end as user_viewed
 		from posts p
 		join users u ON p.user_id = u.id
 		left join likes_count lc on p.id = lc.post_id
 		left join views_count vc on p.id = vc.post_id
 		left join likes l on l.post_id = p.id and l.user_id = $1
+		left join views v on v.post_id = p.id and v.user_id = $1
 		where p.id = $2 and p.deleted_at is null;
 	`
 	var postDTO models.ReadPostDTO
@@ -163,6 +174,7 @@ func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO
 		&postDTO.LikesCount,
 		&postDTO.ViewsCount,
 		&postDTO.UserLiked,
+		&postDTO.UserViewed,
 	)
 	if err == sql.ErrNoRows {
 		return nil, ErrNotFound
