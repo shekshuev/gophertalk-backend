@@ -82,6 +82,11 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 		params = append(params, "%"+dto.Search+"%")
 	}
 
+	if dto.OwnerID > 0 {
+		query += fmt.Sprintf(" and p.user_id = $%d", len(params)+1)
+		params = append(params, dto.OwnerID)
+	}
+
 	if dto.ReplyToID > 0 {
 		query += fmt.Sprintf(" and p.reply_to_id = $%d order by p.created_at asc", len(params)+1)
 		params = append(params, dto.ReplyToID)

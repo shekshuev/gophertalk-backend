@@ -29,6 +29,7 @@ type ReadPostDTO struct {
 
 type FilterPostDTO struct {
 	Search    string `json:"search,omitempty"`
+	OwnerID   uint64 `json:"owner_id,omitempty"`
 	UserID    uint64
 	ReplyToID uint64 `json:"reply_to_id,omitempty"`
 	Limit     uint64 `json:"limit" validate:"required,min=0,max=100"`

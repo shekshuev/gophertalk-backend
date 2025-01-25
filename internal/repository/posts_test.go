@@ -108,6 +108,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 			name: "Success get all posts",
 			filterDTO: models.FilterPostDTO{
 				UserID:    1,
+				OwnerID:   0,
 				Limit:     100,
 				Offset:    0,
 				ReplyToID: 1,
@@ -153,6 +154,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 			name: "Error on SQL query",
 			filterDTO: models.FilterPostDTO{
 				UserID:    1,
+				OwnerID:   0,
 				Limit:     100,
 				Offset:    0,
 				ReplyToID: 1,
