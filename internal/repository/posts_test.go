@@ -207,7 +207,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 	left join likes l on l.post_id = p.id and l.user_id = $1
 	left join views v on v.post_id = p.id and v.user_id = $1
 	where p.deleted_at is null and p.text ilike $2 and p.reply_to_id = $3
-	order by p.created_at desc
+	order by p.created_at asc
 	offset $4 limit $5
 	`)
 
