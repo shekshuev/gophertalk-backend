@@ -48,6 +48,10 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 		views_count as (
 			select post_id, count(*) AS views_count
 			from views group by post_id
+		),
+		replies_count as (
+			select reply_to_id, count(*) AS replies_count
+			from posts where reply_to_id is not null group by reply_to_id
 		)
 		select 
 			p.id AS post_id,
@@ -60,6 +64,7 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 			u.last_name,
 			coalesce(lc.likes_count, 0) AS likes_count,
 			coalesce(vc.views_count, 0) AS views_count,
+			coalesce(rc.replies_count, 0) AS replies_count,
 		    case 
 		        when l.user_id is not null then true
 		        else false
@@ -72,6 +77,7 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 		join users u ON p.user_id = u.id
 		left join likes_count lc ON p.id = lc.post_id
 		left join views_count vc ON p.id = vc.post_id
+		left join replies_count rc ON p.id = rc.reply_to_id
 		left join likes l on l.post_id = p.id and l.user_id = $1
 		left join views v on v.post_id = p.id and v.user_id = $1
 		where p.deleted_at is null
@@ -116,6 +122,7 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 			&userDTO.LastName,
 			&postDTO.LikesCount,
 			&postDTO.ViewsCount,
+			&postDTO.RepliesCount,
 			&postDTO.UserLiked,
 			&postDTO.UserViewed,
 		)
@@ -137,6 +144,10 @@ func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO
 		views_count as (
 			select post_id, count(*) AS views_count
 			from views group by post_id
+		),
+		replies_count as (
+			select reply_to_id, count(*) AS replies_count
+			from posts where reply_to_id is not null group by reply_to_id
 		)
 		select 
 			p.id AS post_id,
@@ -149,6 +160,7 @@ func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO
 			u.last_name,
 			coalesce(lc.likes_count, 0) AS likes_count,
 			coalesce(vc.views_count, 0) AS views_count,
+			coalesce(rc.replies_count, 0) AS replies_count,
 		    case 
 		        when l.user_id is not null then true
 		        else false
@@ -161,6 +173,7 @@ func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO
 		join users u ON p.user_id = u.id
 		left join likes_count lc on p.id = lc.post_id
 		left join views_count vc on p.id = vc.post_id
+		left join replies_count rc ON p.id = rc.reply_to_id
 		left join likes l on l.post_id = p.id and l.user_id = $1
 		left join views v on v.post_id = p.id and v.user_id = $1
 		where p.id = $2 and p.deleted_at is null;
@@ -178,6 +191,7 @@ func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO
 		&userDTO.LastName,
 		&postDTO.LikesCount,
 		&postDTO.ViewsCount,
+		&postDTO.RepliesCount,
 		&postDTO.UserLiked,
 		&postDTO.UserViewed,
 	)

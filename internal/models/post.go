@@ -16,15 +16,16 @@ type ReadPostUserDTO struct {
 }
 
 type ReadPostDTO struct {
-	ID         uint64           `json:"id"`
-	Text       string           `json:"text"`
-	ReplyToID  *uint64          `json:"reply_to_id,omitempty"`
-	User       *ReadPostUserDTO `json:"user,omitempty"`
-	CreatedAt  time.Time        `json:"created_at"`
-	LikesCount uint             `json:"likes_count"`
-	ViewsCount uint             `json:"views_count"`
-	UserLiked  bool             `json:"user_liked"`
-	UserViewed bool             `json:"user_viewed"`
+	ID           uint64           `json:"id"`
+	Text         string           `json:"text"`
+	ReplyToID    *uint64          `json:"reply_to_id,omitempty"`
+	User         *ReadPostUserDTO `json:"user,omitempty"`
+	CreatedAt    time.Time        `json:"created_at"`
+	LikesCount   uint             `json:"likes_count"`
+	ViewsCount   uint             `json:"views_count"`
+	RepliesCount uint             `json:"replies_count"`
+	UserLiked    bool             `json:"user_liked"`
+	UserViewed   bool             `json:"user_viewed"`
 }
 
 type FilterPostDTO struct {

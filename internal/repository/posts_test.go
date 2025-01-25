@@ -182,6 +182,10 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 	views_count as (
 		select post_id, count(*) AS views_count
 		from views group by post_id
+	),
+	replies_count as (
+		select reply_to_id, count(*) AS replies_count
+		from posts where reply_to_id is not null group by reply_to_id
 	)
 	select 
 		p.id AS post_id,
@@ -194,6 +198,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 		u.last_name,
 		coalesce(lc.likes_count, 0) AS likes_count,
 		coalesce(vc.views_count, 0) AS views_count,
+		coalesce(rc.replies_count, 0) AS replies_count,
 		case 
 			when l.user_id is not null then true
 			else false
@@ -206,6 +211,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 	join users u ON p.user_id = u.id
 	left join likes_count lc ON p.id = lc.post_id
 	left join views_count vc ON p.id = vc.post_id
+	left join replies_count rc ON p.id = rc.reply_to_id
 	left join likes l on l.post_id = p.id and l.user_id = $1
 	left join views v on v.post_id = p.id and v.user_id = $1
 	where p.deleted_at is null and p.text ilike $2 and p.reply_to_id = $3
@@ -227,6 +233,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 					"u.last_name",
 					"likes_count",
 					"views_count",
+					"replies_count",
 					"user_liked",
 					"user_viewed",
 				})
@@ -242,6 +249,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 						post.User.LastName,
 						post.LikesCount,
 						post.ViewsCount,
+						post.RepliesCount,
 						post.UserLiked,
 						post.UserViewed)
 				}
@@ -326,6 +334,10 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 	views_count as (
 		select post_id, count(*) AS views_count
 		from views group by post_id
+	),
+	replies_count as (
+		select reply_to_id, count(*) AS replies_count
+		from posts where reply_to_id is not null group by reply_to_id
 	)
 	select 
 		p.id AS post_id,
@@ -338,6 +350,7 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 		u.last_name,
 		coalesce(lc.likes_count, 0) AS likes_count,
 		coalesce(vc.views_count, 0) AS views_count,
+		coalesce(rc.replies_count, 0) AS replies_count,
 		case 
 			when l.user_id is not null then true
 			else false
@@ -350,6 +363,7 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 	join users u ON p.user_id = u.id
 	left join likes_count lc on p.id = lc.post_id
 	left join views_count vc on p.id = vc.post_id
+	left join replies_count rc ON p.id = rc.reply_to_id
 	left join likes l on l.post_id = p.id and l.user_id = $1
 	left join views v on v.post_id = p.id and v.user_id = $1
 	where p.id = $2 and p.deleted_at is null;
@@ -369,6 +383,7 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 					"u.last_name",
 					"likes_count",
 					"views_count",
+					"replies_count",
 					"user_liked",
 					"user_viewed",
 				}).AddRow(
@@ -382,6 +397,7 @@ func TestPostRepositoryImpl_GetPostByID(t *testing.T) {
 					tc.readDTO.User.LastName,
 					tc.readDTO.LikesCount,
 					tc.readDTO.ViewsCount,
+					tc.readDTO.RepliesCount,
 					tc.readDTO.UserLiked,
 					tc.readDTO.UserViewed,
 				)
