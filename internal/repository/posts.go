@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/shekshuev/gophertalk-backend/internal/config"
 	"github.com/shekshuev/gophertalk-backend/internal/models"
@@ -13,6 +14,7 @@ import (
 type PostRepositoryImpl struct {
 	db  *sql.DB
 	cfg *config.Config
+	vb  *ViewBuffer
 }
 
 func NewPostRepositoryImpl(cfg *config.Config) *PostRepositoryImpl {
@@ -21,7 +23,15 @@ func NewPostRepositoryImpl(cfg *config.Config) *PostRepositoryImpl {
 		log.Fatal("Error connecting to database", err)
 		return nil
 	}
-	repository := &PostRepositoryImpl{cfg: cfg, db: db}
+	viewsBufferSize := 100
+	viewsBufferTimer := time.Second
+	vb := &ViewBuffer{
+		buffer:     make([]View, 0, viewsBufferSize),
+		maxRecords: viewsBufferSize,
+		timer:      viewsBufferTimer,
+	}
+	repository := &PostRepositoryImpl{cfg: cfg, db: db, vb: vb}
+	go repository.startViewsTimer()
 	return repository
 }
 
@@ -41,18 +51,6 @@ func (r *PostRepositoryImpl) CreatePost(dto models.CreatePostDTO) (*models.ReadP
 
 func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.ReadPostDTO, error) {
 	query := `
-		with likes_count AS (
-			select post_id, count(*) as likes_count
-			from likes group by post_id
-		),
-		views_count as (
-			select post_id, count(*) AS views_count
-			from views group by post_id
-		),
-		replies_count as (
-			select reply_to_id, count(*) AS replies_count
-			from posts where reply_to_id is not null group by reply_to_id
-		)
 		select 
 			p.id AS post_id,
 			p.text,
@@ -62,9 +60,9 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 			u.user_name,
 			u.first_name,
 			u.last_name,
-			coalesce(lc.likes_count, 0) AS likes_count,
-			coalesce(vc.views_count, 0) AS views_count,
-			coalesce(rc.replies_count, 0) AS replies_count,
+			p.likes_count,
+			p.views_count,
+			p.replies_count,
 		    case 
 		        when l.user_id is not null then true
 		        else false
@@ -75,9 +73,6 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 		    end as user_viewed
 		from posts p
 		join users u ON p.user_id = u.id
-		left join likes_count lc ON p.id = lc.post_id
-		left join views_count vc ON p.id = vc.post_id
-		left join replies_count rc ON p.id = rc.reply_to_id
 		left join likes l on l.post_id = p.id and l.user_id = $1
 		left join views v on v.post_id = p.id and v.user_id = $1
 		where p.deleted_at is null
@@ -137,18 +132,6 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 
 func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO, error) {
 	query := `
-		with likes_count AS (
-			select post_id, count(*) as likes_count
-			from likes group by post_id
-		),
-		views_count as (
-			select post_id, count(*) AS views_count
-			from views group by post_id
-		),
-		replies_count as (
-			select reply_to_id, count(*) AS replies_count
-			from posts where reply_to_id is not null group by reply_to_id
-		)
 		select 
 			p.id AS post_id,
 			p.text,
@@ -158,9 +141,9 @@ func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO
 			u.user_name,
 			u.first_name,
 			u.last_name,
-			coalesce(lc.likes_count, 0) AS likes_count,
-			coalesce(vc.views_count, 0) AS views_count,
-			coalesce(rc.replies_count, 0) AS replies_count,
+			p.likes_count,
+			p.views_count,
+			p.replies_count,
 		    case 
 		        when l.user_id is not null then true
 		        else false
@@ -171,9 +154,6 @@ func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO
 		    end as user_viewed
 		from posts p
 		join users u ON p.user_id = u.id
-		left join likes_count lc on p.id = lc.post_id
-		left join views_count vc on p.id = vc.post_id
-		left join replies_count rc ON p.id = rc.reply_to_id
 		left join likes l on l.post_id = p.id and l.user_id = $1
 		left join views v on v.post_id = p.id and v.user_id = $1
 		where p.id = $2 and p.deleted_at is null;
@@ -211,28 +191,6 @@ func (r *PostRepositoryImpl) DeletePost(id, ownerID uint64) error {
 	result, err := r.db.Exec(query, id, ownerID)
 	if err != nil {
 		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNotFound
-	}
-	return nil
-}
-
-func (r *PostRepositoryImpl) ViewPost(id, viewedByID uint64) error {
-	query := `
-        insert into views (post_id, user_id) values ($1, $2);
-    `
-	result, err := r.db.Exec(query, id, viewedByID)
-	if err != nil {
-		if strings.Contains(err.Error(), "pk__views") {
-			return ErrAlreadyViewed
-		} else {
-			return err
-		}
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
