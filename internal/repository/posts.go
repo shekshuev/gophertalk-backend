@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/shekshuev/gophertalk-backend/internal/config"
@@ -60,36 +61,95 @@ func (r *PostRepositoryImpl) CreatePost(dto models.CreatePostDTO) (*models.ReadP
 }
 
 func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.ReadPostDTO, error) {
+	var (
+		posts    []models.ReadPostDTO
+		likesMap map[uint64]bool
+		viewsMap map[uint64]bool
+		wg       sync.WaitGroup
+		mu       sync.Mutex
+		errChan  = make(chan error, 3)
+		doneChan = make(chan struct{})
+	)
+
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		p, err := r.fetchPosts(dto)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		mu.Lock()
+		posts = p
+		mu.Unlock()
+	}()
+
+	go func() {
+		defer wg.Done()
+		lm, err := r.fetchLikesMap(dto.UserID)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		mu.Lock()
+		likesMap = lm
+		mu.Unlock()
+	}()
+
+	go func() {
+		defer wg.Done()
+		vm, err := r.fetchViewsMap(dto.UserID)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		mu.Lock()
+		viewsMap = vm
+		mu.Unlock()
+	}()
+
+	go func() {
+		wg.Wait()
+		close(doneChan)
+	}()
+	select {
+	case <-doneChan:
+		for i, post := range posts {
+			if likesMap[post.ID] {
+				posts[i].UserLiked = true
+			}
+			if viewsMap[post.ID] {
+				posts[i].UserViewed = true
+			}
+		}
+		return posts, nil
+	case err := <-errChan:
+		return nil, err
+	}
+}
+
+func (r *PostRepositoryImpl) fetchPosts(dto models.FilterPostDTO) ([]models.ReadPostDTO, error) {
 	query := `
 		select 
-			p.id AS post_id,
+			p.id as post_id,
 			p.text,
 			p.reply_to_id,
 			p.created_at,
-			u.id AS user_id,
+			u.id as user_id,
 			u.user_name,
 			u.first_name,
 			u.last_name,
 			p.likes_count,
 			p.views_count,
-			p.replies_count,
-		    case 
-		        when l.user_id is not null then true
-		        else false
-		    end as user_liked,
-			case 
-		        when v.user_id is not null then true
-		        else false
-		    end as user_viewed
+			p.replies_count
 		from posts p
-		join users u ON p.user_id = u.id
-		left join likes l on l.post_id = p.id and l.user_id = $1
-		left join views v on v.post_id = p.id and v.user_id = $1
+		join users u on p.user_id = u.id
 		where p.deleted_at is null
 	`
-	params := []interface{}{dto.UserID}
+	params := []interface{}{}
 	if dto.Search != "" {
-		query += fmt.Sprintf(" and p.text ilike $%d", len(params)+1)
+		query += " and p.text ilike $1"
 		params = append(params, "%"+dto.Search+"%")
 	}
 
@@ -108,36 +168,82 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 	query += fmt.Sprintf(" offset $%d limit $%d", len(params)+1, len(params)+2)
 	params = append(params, dto.Offset, dto.Limit)
 
-	var readDTOs []models.ReadPostDTO = make([]models.ReadPostDTO, 0)
 	rows, err := r.db.Query(query, params...)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
+	var posts []models.ReadPostDTO
 	for rows.Next() {
-		var postDTO models.ReadPostDTO
-		var userDTO models.ReadPostUserDTO
+		var post models.ReadPostDTO
+		var user models.ReadPostUserDTO
 		err := rows.Scan(
-			&postDTO.ID,
-			&postDTO.Text,
-			&postDTO.ReplyToID,
-			&postDTO.CreatedAt,
-			&userDTO.ID,
-			&userDTO.UserName,
-			&userDTO.FirstName,
-			&userDTO.LastName,
-			&postDTO.LikesCount,
-			&postDTO.ViewsCount,
-			&postDTO.RepliesCount,
-			&postDTO.UserLiked,
-			&postDTO.UserViewed,
+			&post.ID,
+			&post.Text,
+			&post.ReplyToID,
+			&post.CreatedAt,
+			&user.ID,
+			&user.UserName,
+			&user.FirstName,
+			&user.LastName,
+			&post.LikesCount,
+			&post.ViewsCount,
+			&post.RepliesCount,
 		)
 		if err != nil {
 			return nil, err
 		}
-		postDTO.User = &userDTO
-		readDTOs = append(readDTOs, postDTO)
+		post.User = &user
+		posts = append(posts, post)
 	}
-	return readDTOs, nil
+	return posts, nil
+}
+
+func (r *PostRepositoryImpl) fetchLikesMap(userID uint64) (map[uint64]bool, error) {
+	query := `
+		select post_id
+		from likes
+		where user_id = $1
+	`
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	likesMap := make(map[uint64]bool)
+	for rows.Next() {
+		var postID uint64
+		if err := rows.Scan(&postID); err != nil {
+			return nil, err
+		}
+		likesMap[postID] = true
+	}
+	return likesMap, nil
+}
+
+func (r *PostRepositoryImpl) fetchViewsMap(userID uint64) (map[uint64]bool, error) {
+	query := `
+		select post_id
+		from views
+		where user_id = $1
+	`
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	viewsMap := make(map[uint64]bool)
+	for rows.Next() {
+		var postID uint64
+		if err := rows.Scan(&postID); err != nil {
+			return nil, err
+		}
+		viewsMap[postID] = true
+	}
+	return viewsMap, nil
 }
 
 func (r *PostRepositoryImpl) DeletePost(id, ownerID uint64) error {

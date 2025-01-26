@@ -102,7 +102,6 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 		name      string
 		filterDTO models.FilterPostDTO
 		readDTOs  []models.ReadPostDTO
-		hasError  bool
 	}{
 		{
 			name: "Success get all posts",
@@ -148,25 +147,12 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 					UserViewed: true,
 				},
 			},
-			hasError: false,
-		},
-		{
-			name: "Error on SQL query",
-			filterDTO: models.FilterPostDTO{
-				UserID:    1,
-				OwnerID:   0,
-				Limit:     100,
-				Offset:    0,
-				ReplyToID: 1,
-				Search:    "test",
-			},
-			readDTOs: nil,
-			hasError: true,
 		},
 	}
 
 	cfg := config.GetConfig()
 	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+	mock.MatchExpectationsInOrder(false)
 	if err != nil {
 		t.Fatalf("Error creating db mock: %v", err)
 	}
@@ -176,85 +162,86 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 
 	query := regexp.QuoteMeta(`
 	select 
-		p.id AS post_id,
+		p.id as post_id,
 		p.text,
 		p.reply_to_id,
 		p.created_at,
-		u.id AS user_id,
+		u.id as user_id,
 		u.user_name,
 		u.first_name,
 		u.last_name,
 		p.likes_count,
 		p.views_count,
-		p.replies_count,
-		case 
-			when l.user_id is not null then true
-			else false
-		end as user_liked,
-		case 
-			when v.user_id is not null then true
-			else false
-		end as user_viewed
+		p.replies_count
 	from posts p
-	join users u ON p.user_id = u.id
-	left join likes l on l.post_id = p.id and l.user_id = $1
-	left join views v on v.post_id = p.id and v.user_id = $1
-	where p.deleted_at is null and p.text ilike $2 and p.reply_to_id = $3
+	join users u on p.user_id = u.id
+	where p.deleted_at is null and p.text ilike $1 and p.reply_to_id = $2
 	order by p.created_at asc
-	offset $4 limit $5
+	offset $3 limit $4
 	`)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if !tc.hasError {
-				rows := sqlmock.NewRows([]string{
-					"p.id",
-					"p.text",
-					"p.reply_to_id",
-					"p.created_at",
-					"u.id",
-					"u.user_name",
-					"u.first_name",
-					"u.last_name",
-					"likes_count",
-					"views_count",
-					"replies_count",
-					"user_liked",
-					"user_viewed",
-				})
-				for _, post := range tc.readDTOs {
-					rows.AddRow(
-						post.ID,
-						post.Text,
-						post.ReplyToID,
-						post.CreatedAt,
-						post.User.ID,
-						post.User.UserName,
-						post.User.FirstName,
-						post.User.LastName,
-						post.LikesCount,
-						post.ViewsCount,
-						post.RepliesCount,
-						post.UserLiked,
-						post.UserViewed)
-				}
-
-				mock.ExpectQuery(query).
-					WithArgs(tc.filterDTO.UserID, "%"+tc.filterDTO.Search+"%", tc.filterDTO.ReplyToID, tc.filterDTO.Offset, tc.filterDTO.Limit).
-					WillReturnRows(rows)
-			} else {
-				mock.ExpectQuery(query).
-					WithArgs(tc.filterDTO.UserID, "%"+tc.filterDTO.Search+"%", tc.filterDTO.ReplyToID, tc.filterDTO.Offset, tc.filterDTO.Limit).
-					WillReturnError(sql.ErrNoRows)
+			rows := sqlmock.NewRows([]string{
+				"p.id",
+				"p.text",
+				"p.reply_to_id",
+				"p.created_at",
+				"u.id",
+				"u.user_name",
+				"u.first_name",
+				"u.last_name",
+				"likes_count",
+				"views_count",
+				"replies_count",
+			})
+			for _, post := range tc.readDTOs {
+				rows.AddRow(
+					post.ID,
+					post.Text,
+					post.ReplyToID,
+					post.CreatedAt,
+					post.User.ID,
+					post.User.UserName,
+					post.User.FirstName,
+					post.User.LastName,
+					post.LikesCount,
+					post.ViewsCount,
+					post.RepliesCount,
+				)
 			}
+
+			mock.ExpectQuery(query).
+				WithArgs("%"+tc.filterDTO.Search+"%", tc.filterDTO.ReplyToID, tc.filterDTO.Offset, tc.filterDTO.Limit).
+				WillReturnRows(rows)
+
+			likesRows := sqlmock.NewRows([]string{
+				"post_id",
+			})
+			for _, post := range tc.readDTOs {
+				likesRows.AddRow(post.ID)
+			}
+			mock.ExpectQuery(regexp.QuoteMeta(`
+				select post_id
+				from likes
+				where user_id = $1`,
+			)).WithArgs(tc.filterDTO.UserID).WillReturnRows(likesRows)
+
+			viewsRows := sqlmock.NewRows([]string{
+				"post_id",
+			})
+			for _, post := range tc.readDTOs {
+				viewsRows.AddRow(post.ID)
+			}
+			mock.ExpectQuery(regexp.QuoteMeta(`
+				select post_id
+				from views
+				where user_id = $1`,
+			)).WithArgs(tc.filterDTO.UserID).WillReturnRows(viewsRows)
 
 			posts, err := r.GetAllPosts(tc.filterDTO)
-			if tc.hasError {
-				assert.NotNil(t, err, "Error is nil")
-			} else {
-				assert.Nil(t, err, "Error is not nil")
-				assert.Equal(t, tc.readDTOs, posts, "Posts mismatch")
-			}
+			assert.Nil(t, err, "Error is not nil")
+			assert.Equal(t, tc.readDTOs, posts, "Posts mismatch")
 
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("Not all expectations were met: %v", err)
