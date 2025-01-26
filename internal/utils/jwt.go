@@ -56,7 +56,7 @@ func CreateToken(secret, userId string, exp time.Duration) (string, error) {
 
 func GetToken(tokenString, secret string) (*jwt.RegisteredClaims, error) {
 	claims := &jwt.RegisteredClaims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(_ *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
