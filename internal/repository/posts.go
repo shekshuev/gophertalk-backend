@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/shekshuev/gophertalk-backend/internal/config"
@@ -15,6 +14,7 @@ type PostRepositoryImpl struct {
 	db  *sql.DB
 	cfg *config.Config
 	vb  *ViewBuffer
+	lb  *LikeBuffer
 }
 
 func NewPostRepositoryImpl(cfg *config.Config) *PostRepositoryImpl {
@@ -25,13 +25,22 @@ func NewPostRepositoryImpl(cfg *config.Config) *PostRepositoryImpl {
 	}
 	viewsBufferSize := 100
 	viewsBufferTimer := time.Second
+	likesBufferSize := 10
+	likesBufferTimer := 5 * time.Second
 	vb := &ViewBuffer{
 		buffer:     make([]View, 0, viewsBufferSize),
 		maxRecords: viewsBufferSize,
 		timer:      viewsBufferTimer,
 	}
-	repository := &PostRepositoryImpl{cfg: cfg, db: db, vb: vb}
+	lb := &LikeBuffer{
+		likeBuffer:    make([]Like, 0, 100),
+		dislikeBuffer: make([]Dislike, 0, 100),
+		maxRecords:    likesBufferSize,
+		timer:         likesBufferTimer,
+	}
+	repository := &PostRepositoryImpl{cfg: cfg, db: db, vb: vb, lb: lb}
 	go repository.startViewsTimer()
+	go repository.startLikesTimer()
 	return repository
 }
 
@@ -189,46 +198,6 @@ func (r *PostRepositoryImpl) DeletePost(id, ownerID uint64) error {
         update posts set deleted_at = now() where id = $1 and user_id = $2 and deleted_at is null;
     `
 	result, err := r.db.Exec(query, id, ownerID)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNotFound
-	}
-	return nil
-}
-
-func (r *PostRepositoryImpl) LikePost(id, likedByID uint64) error {
-	query := `
-        insert into likes (post_id, user_id) values ($1, $2);
-    `
-	result, err := r.db.Exec(query, id, likedByID)
-	if err != nil {
-		if strings.Contains(err.Error(), "pk__likes") {
-			return ErrAlreadyLiked
-		} else {
-			return err
-		}
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return ErrNotFound
-	}
-	return nil
-}
-
-func (r *PostRepositoryImpl) DislikePost(id, dislikedByID uint64) error {
-	query := `
-        delete from likes where post_id = $1 and user_id = $2;
-    `
-	result, err := r.db.Exec(query, id, dislikedByID)
 	if err != nil {
 		return err
 	}

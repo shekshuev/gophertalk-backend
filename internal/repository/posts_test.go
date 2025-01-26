@@ -478,7 +478,7 @@ func TestPostRepositoryImpl_ViewPost(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			vb := &ViewBuffer{
-				buffer:     make([]View, 0, 1),
+				buffer:     make([]View, 0, tc.maxRecords),
 				maxRecords: tc.maxRecords,
 				timer:      time.Second,
 			}
@@ -524,19 +524,19 @@ func TestPostRepositoryImpl_ViewPost(t *testing.T) {
 
 func TestPostRepositoryImpl_LikePost(t *testing.T) {
 	testCases := []struct {
-		name     string
-		id       uint64
-		hasError bool
+		name       string
+		id         uint64
+		maxRecords int
 	}{
 		{
-			name:     "Success like post",
-			id:       1,
-			hasError: false,
+			name:       "Success like post",
+			id:         1,
+			maxRecords: 1,
 		},
 		{
-			name:     "Error on like SQL",
-			id:       2,
-			hasError: true,
+			name:       "Success cache post",
+			id:         1,
+			maxRecords: 2,
 		},
 	}
 
@@ -547,28 +547,47 @@ func TestPostRepositoryImpl_LikePost(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := &PostRepositoryImpl{cfg: &cfg, db: db}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if !tc.hasError {
-				mock.ExpectExec(regexp.QuoteMeta(`insert into likes (post_id, user_id) values ($1, $2);`)).
-					WithArgs(tc.id, uint64(1)).
+			lb := &LikeBuffer{
+				likeBuffer: make([]Like, 0, tc.maxRecords),
+				maxRecords: tc.maxRecords,
+				timer:      time.Second,
+			}
+			r := &PostRepositoryImpl{cfg: &cfg, db: db, lb: lb}
+			if tc.maxRecords == 1 {
+				mock.ExpectBegin()
+				mock.ExpectExec(regexp.QuoteMeta("create temp table tmp_likes (post_id bigint, user_id bigint, created_at timestamp) on commit drop;")).
 					WillReturnResult(sqlmock.NewResult(1, 1))
-			} else {
-				mock.ExpectExec(regexp.QuoteMeta(`insert into likes (post_id, user_id) values ($1, $2);`)).
-					WithArgs(tc.id, uint64(1)).
-					WillReturnError(sql.ErrNoRows)
+				mock.ExpectExec(regexp.QuoteMeta(`insert into tmp_likes (post_id, user_id, created_at) values ($1, $2, $3)`)).
+					WithArgs(tc.id, uint64(1), sqlmock.AnyArg()).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(regexp.QuoteMeta(`
+					insert into likes (post_id, user_id, created_at)
+					select post_id, user_id, min(created_at) as created_at
+					from tmp_likes group by post_id, user_id on conflict (user_id, post_id) do nothing;
+					`)).WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(regexp.QuoteMeta(`
+					update posts set likes_count = l.count from (
+						select post_id, count(post_id) as count from likes where post_id in (
+							select distinct post_id from tmp_likes
+						)
+						group by post_id
+					) l where posts.id = l.post_id;
+					`)).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectCommit()
 			}
 
 			err := r.LikePost(tc.id, uint64(1))
-			if tc.hasError {
-				assert.NotNil(t, err, "Error is nil")
-			} else {
-				assert.Nil(t, err, "Error is not nil")
+
+			assert.Nil(t, err, "Error is not nil")
+
+			if tc.maxRecords > 1 {
+				assert.Len(t, r.lb.likeBuffer, 1, "Max records exceeded")
 			}
 
-			if err := mock.ExpectationsWereMet(); err != nil {
+			if err := mock.ExpectationsWereMet(); err != nil && tc.maxRecords == 1 {
 				t.Errorf("Not all expectations were met: %v", err)
 			}
 		})
