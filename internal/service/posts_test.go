@@ -88,66 +88,6 @@ func TestPostServiceImpl_GetAllPosts(t *testing.T) {
 	}
 }
 
-func TestPostServiceImpl_GetPostByID(t *testing.T) {
-	testCases := []struct {
-		name     string
-		id       uint64
-		userID   uint64
-		readDTO  *models.ReadPostDTO
-		hasError bool
-	}{
-		{
-			name:   "Success get post by ID",
-			id:     1,
-			userID: 1,
-			readDTO: &models.ReadPostDTO{
-				ID:   1,
-				Text: "Lorem ipsum dolor sit amet, consectetur adipiscing",
-				User: &models.ReadPostUserDTO{
-					ID:        1,
-					UserName:  "username",
-					FirstName: "first_name",
-					LastName:  "last_name",
-				},
-				ReplyToID: nil,
-				CreatedAt: time.Now(),
-			},
-			hasError: false,
-		},
-		{
-			name:     "Post not found",
-			id:       1,
-			userID:   1,
-			readDTO:  nil,
-			hasError: true,
-		},
-	}
-	cfg := config.GetConfig()
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	m := mocks.NewMockPostRepository(ctrl)
-	s := &PostServiceImpl{cfg: &cfg, repo: m}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			if !tc.hasError {
-				m.EXPECT().GetPostByID(tc.id, tc.userID).Return(tc.readDTO, nil)
-			} else {
-				m.EXPECT().GetPostByID(tc.id, tc.userID).Return(nil, sql.ErrNoRows)
-			}
-
-			user, err := s.GetPostByID(tc.id, tc.userID)
-			if tc.hasError {
-				assert.NotNil(t, err, "Error is nil")
-				assert.Nil(t, user, "Post should be nil")
-			} else {
-				assert.Nil(t, err, "Error is not nil")
-				assert.Equal(t, tc.readDTO, user, "Post mismatch")
-			}
-
-		})
-	}
-}
-
 func TestPostServiceImpl_CreatePost(t *testing.T) {
 	testCases := []struct {
 		name      string

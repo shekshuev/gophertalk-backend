@@ -19,10 +19,6 @@ func (s *PostServiceImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.ReadPo
 	return s.repo.GetAllPosts(dto)
 }
 
-func (s *PostServiceImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO, error) {
-	return s.repo.GetPostByID(id, userID)
-}
-
 func (s *PostServiceImpl) CreatePost(post models.CreatePostDTO) (*models.ReadPostDTO, error) {
 	return s.repo.CreatePost(post)
 }

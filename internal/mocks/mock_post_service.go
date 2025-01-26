@@ -92,21 +92,6 @@ func (mr *MockPostServiceMockRecorder) GetAllPosts(arg0 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPosts", reflect.TypeOf((*MockPostService)(nil).GetAllPosts), arg0)
 }
 
-// GetPostByID mocks base method.
-func (m *MockPostService) GetPostByID(arg0, arg1 uint64) (*models.ReadPostDTO, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPostByID", arg0, arg1)
-	ret0, _ := ret[0].(*models.ReadPostDTO)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPostByID indicates an expected call of GetPostByID.
-func (mr *MockPostServiceMockRecorder) GetPostByID(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPostByID", reflect.TypeOf((*MockPostService)(nil).GetPostByID), arg0, arg1)
-}
-
 // LikePost mocks base method.
 func (m *MockPostService) LikePost(arg0, arg1 uint64) error {
 	m.ctrl.T.Helper()

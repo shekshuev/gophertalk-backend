@@ -21,7 +21,6 @@ type UserRepository interface {
 
 type PostRepository interface {
 	GetAllPosts(dto models.FilterPostDTO) ([]models.ReadPostDTO, error)
-	GetPostByID(id, userID uint64) (*models.ReadPostDTO, error)
 	CreatePost(post models.CreatePostDTO) (*models.ReadPostDTO, error)
 	DeletePost(id, ownerID uint64) error
 	ViewPost(id, viewedByID uint64) error

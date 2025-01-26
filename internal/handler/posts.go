@@ -63,38 +63,6 @@ func (h *Handler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) GetPostByID(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
-	if err != nil {
-		h.JSONError(w, http.StatusNotFound, ErrInvalidID.Error())
-		return
-	}
-	claims, ok := utils.GetClaimsFromContext(r.Context())
-	if !ok {
-		h.JSONError(w, http.StatusUnauthorized, ErrInvalidToken.Error())
-		return
-	}
-	userID, err := strconv.ParseUint(claims.Subject, 10, 64)
-	if err != nil {
-		h.JSONError(w, http.StatusNotFound, ErrInvalidToken.Error())
-		return
-	}
-	readDTO, err := h.posts.GetPostByID(id, userID)
-	if err != nil {
-		h.JSONError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	resp, err := json.Marshal(readDTO)
-	if err != nil {
-		h.JSONError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	_, err = w.Write(resp)
-	if err != nil {
-		h.JSONError(w, http.StatusBadRequest, err.Error())
-	}
-}
-
 func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {

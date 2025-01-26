@@ -140,60 +140,6 @@ func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.Rea
 	return readDTOs, nil
 }
 
-func (r *PostRepositoryImpl) GetPostByID(id, userID uint64) (*models.ReadPostDTO, error) {
-	query := `
-		select 
-			p.id AS post_id,
-			p.text,
-			p.reply_to_id,
-			p.created_at,
-			u.id AS user_id,
-			u.user_name,
-			u.first_name,
-			u.last_name,
-			p.likes_count,
-			p.views_count,
-			p.replies_count,
-		    case 
-		        when l.user_id is not null then true
-		        else false
-		    end as user_liked,
-			case 
-		        when v.user_id is not null then true
-		        else false
-		    end as user_viewed
-		from posts p
-		join users u ON p.user_id = u.id
-		left join likes l on l.post_id = p.id and l.user_id = $1
-		left join views v on v.post_id = p.id and v.user_id = $1
-		where p.id = $2 and p.deleted_at is null;
-	`
-	var postDTO models.ReadPostDTO
-	var userDTO models.ReadPostUserDTO
-	err := r.db.QueryRow(query, userID, id).Scan(
-		&postDTO.ID,
-		&postDTO.Text,
-		&postDTO.ReplyToID,
-		&postDTO.CreatedAt,
-		&userDTO.ID,
-		&userDTO.UserName,
-		&userDTO.FirstName,
-		&userDTO.LastName,
-		&postDTO.LikesCount,
-		&postDTO.ViewsCount,
-		&postDTO.RepliesCount,
-		&postDTO.UserLiked,
-		&postDTO.UserViewed,
-	)
-	if err == sql.ErrNoRows {
-		return nil, ErrNotFound
-	} else if err != nil {
-		return nil, err
-	}
-	postDTO.User = &userDTO
-	return &postDTO, nil
-}
-
 func (r *PostRepositoryImpl) DeletePost(id, ownerID uint64) error {
 	query := `
         update posts set deleted_at = now() where id = $1 and user_id = $2 and deleted_at is null;

@@ -66,7 +66,6 @@ func NewHandler(
 		r.Post("/", h.CreatePost)
 
 		r.Route("/{id}", func(r chi.Router) {
-			r.Get("/", h.GetPostByID)
 			r.Delete("/", h.DeletePostByID)
 			r.Post("/view", h.ViewPost)
 			r.Post("/like", h.LikePost)
