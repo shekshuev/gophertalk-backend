@@ -450,69 +450,77 @@ func TestPostRepositoryImpl_DeletePost(t *testing.T) {
 	}
 }
 
-// func TestPostRepositoryImpl_ViewPost(t *testing.T) {
-// 	testCases := []struct {
-// 		name     string
-// 		id       uint64
-// 		hasError bool
-// 	}{
-// 		{
-// 			name: "Success view post",
-// 			id:   1,
-// 		},
-// 	}
+func TestPostRepositoryImpl_ViewPost(t *testing.T) {
+	testCases := []struct {
+		name       string
+		id         uint64
+		maxRecords int
+	}{
+		{
+			name:       "Success view post",
+			id:         1,
+			maxRecords: 1,
+		},
+		{
+			name:       "Success cache post",
+			id:         1,
+			maxRecords: 2,
+		},
+	}
 
-// 	cfg := config.GetConfig()
-// 	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
-// 	if err != nil {
-// 		t.Fatalf("Error creating db mock: %v", err)
-// 	}
-// 	defer db.Close()
-// 	vb := &ViewBuffer{
-// 		buffer:     make([]View, 0, 1),
-// 		maxRecords: 1,
-// 		timer:      time.Second,
-// 	}
-// 	r := &PostRepositoryImpl{cfg: &cfg, db: db, vb: vb}
+	cfg := config.GetConfig()
+	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+	if err != nil {
+		t.Fatalf("Error creating db mock: %v", err)
+	}
+	defer db.Close()
 
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			mock.ExpectBegin()
-// 			mock.ExpectExec(regexp.QuoteMeta("create temp table tmp_views (post_id bigint, user_id bigint, created_at timestamp) on commit drop;")).
-// 				WillReturnResult(sqlmock.NewResult(1, 1))
-// 			mock.ExpectExec(regexp.QuoteMeta(`insert into tmp_views (post_id, user_id, created_at) values ($1, $2, $3)`)).
-// 				WithArgs(tc.id, uint64(1), time.Now()).
-// 				WillReturnResult(sqlmock.NewResult(1, 1))
-// 			mock.ExpectExec(regexp.QuoteMeta(`
-// 				insert into views (post_id, user_id, created_at)
-// 				select post_id, user_id, min(created_at) as created_at
-// 				from tmp_views group by post_id, user_id on conflict (user_id, post_id) do nothing;
-// 				`)).WillReturnResult(sqlmock.NewResult(1, 1))
-// 			mock.ExpectExec(regexp.QuoteMeta(`
-// 				update posts set views_count = v.count from (
-// 					select post_id, count(post_id) as count from views where post_id in (
-// 						select distinct post_id from tmp_views
-// 					)
-// 					group by post_id
-// 				) v where posts.id = v.post_id;
-// 				`)).
-// 				WillReturnResult(sqlmock.NewResult(1, 1))
-// 			mock.ExpectCommit()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			vb := &ViewBuffer{
+				buffer:     make([]View, 0, 1),
+				maxRecords: tc.maxRecords,
+				timer:      time.Second,
+			}
+			r := &PostRepositoryImpl{cfg: &cfg, db: db, vb: vb}
+			if tc.maxRecords == 1 {
+				mock.ExpectBegin()
+				mock.ExpectExec(regexp.QuoteMeta("create temp table tmp_views (post_id bigint, user_id bigint, created_at timestamp) on commit drop;")).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(regexp.QuoteMeta(`insert into tmp_views (post_id, user_id, created_at) values ($1, $2, $3)`)).
+					WithArgs(tc.id, uint64(1), sqlmock.AnyArg()).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(regexp.QuoteMeta(`
+					insert into views (post_id, user_id, created_at)
+					select post_id, user_id, min(created_at) as created_at
+					from tmp_views group by post_id, user_id on conflict (user_id, post_id) do nothing;
+					`)).WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(regexp.QuoteMeta(`
+					update posts set views_count = v.count from (
+						select post_id, count(post_id) as count from views where post_id in (
+							select distinct post_id from tmp_views
+						)
+						group by post_id
+					) v where posts.id = v.post_id;
+					`)).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectCommit()
+			}
 
-// 			err := r.ViewPost(tc.id, uint64(1))
+			err := r.ViewPost(tc.id, uint64(1))
 
-// 			if tc.hasError {
-// 				assert.NotNil(t, err, "Error is nil")
-// 			} else {
-// 				assert.Nil(t, err, "Error is not nil")
-// 			}
+			assert.Nil(t, err, "Error is not nil")
 
-// 			if err := mock.ExpectationsWereMet(); err != nil {
-// 				t.Errorf("Not all expectations were met: %v", err)
-// 			}
-// 		})
-// 	}
-// }
+			if tc.maxRecords > 1 {
+				assert.Len(t, r.vb.buffer, 1, "Max records exceeded")
+			}
+
+			if err := mock.ExpectationsWereMet(); err != nil && tc.maxRecords == 1 {
+				t.Errorf("Not all expectations were met: %v", err)
+			}
+		})
+	}
+}
 
 func TestPostRepositoryImpl_LikePost(t *testing.T) {
 	testCases := []struct {
