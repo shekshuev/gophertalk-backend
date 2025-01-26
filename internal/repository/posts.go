@@ -41,6 +41,7 @@ func NewPostRepositoryImpl(cfg *config.Config) *PostRepositoryImpl {
 	repository := &PostRepositoryImpl{cfg: cfg, db: db, vb: vb, lb: lb}
 	go repository.startViewsTimer()
 	go repository.startLikesTimer()
+	go repository.startDislikesTimer()
 	return repository
 }
 
