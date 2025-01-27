@@ -11,11 +11,19 @@ import (
 	"github.com/shekshuev/gophertalk-backend/internal/models"
 )
 
+type ReplyBuffer struct {
+	buffer     map[uint64]int
+	lock       sync.Mutex
+	maxRecords int
+	timer      time.Duration
+}
+
 type PostRepositoryImpl struct {
 	db  *sql.DB
 	cfg *config.Config
 	vb  *ViewBuffer
 	lb  *LikeBuffer
+	rb  *ReplyBuffer
 }
 
 func NewPostRepositoryImpl(cfg *config.Config) *PostRepositoryImpl {
@@ -28,6 +36,8 @@ func NewPostRepositoryImpl(cfg *config.Config) *PostRepositoryImpl {
 	viewsBufferTimer := time.Second
 	likesBufferSize := 10
 	likesBufferTimer := 5 * time.Second
+	replyBufferTimer := 10 * time.Second
+	replyBufferSize := 10
 	vb := &ViewBuffer{
 		buffer:     make([]View, 0, viewsBufferSize),
 		maxRecords: viewsBufferSize,
@@ -39,10 +49,16 @@ func NewPostRepositoryImpl(cfg *config.Config) *PostRepositoryImpl {
 		maxRecords:    likesBufferSize,
 		timer:         likesBufferTimer,
 	}
-	repository := &PostRepositoryImpl{cfg: cfg, db: db, vb: vb, lb: lb}
+	rb := &ReplyBuffer{
+		buffer:     make(map[uint64]int),
+		maxRecords: replyBufferSize,
+		timer:      replyBufferTimer,
+	}
+	repository := &PostRepositoryImpl{cfg: cfg, db: db, vb: vb, lb: lb, rb: rb}
 	go repository.startViewsTimer()
 	go repository.startLikesTimer()
 	go repository.startDislikesTimer()
+	go repository.startRepliesTimer()
 	return repository
 }
 
@@ -57,7 +73,43 @@ func (r *PostRepositoryImpl) CreatePost(dto models.CreatePostDTO) (*models.ReadP
 	if err != nil {
 		return nil, err
 	}
+	if dto.ReplyToID != nil && *dto.ReplyToID > 0 {
+		r.rb.lock.Lock()
+		defer r.rb.lock.Unlock()
+		r.rb.buffer[*dto.ReplyToID]++
+		if r.rb.buffer[*dto.ReplyToID] > r.rb.maxRecords {
+			r.flushReplies()
+		}
+	}
 	return &post, nil
+}
+
+func (r *PostRepositoryImpl) flushReplies() {
+	for postID, count := range r.rb.buffer {
+		_, err := r.db.Exec(`
+			update posts
+			set replies_count = replies_count + $1
+			where id = $2
+		`, count, postID)
+		if err != nil {
+			log.Printf("Failed to update replies_count for post %d: %v", postID, err)
+		}
+	}
+	r.rb.buffer = make(map[uint64]int)
+}
+
+func (r *PostRepositoryImpl) startRepliesTimer() {
+	ticker := time.NewTicker(r.rb.timer)
+	go func() {
+
+		for range ticker.C {
+			r.rb.lock.Lock()
+			if len(r.rb.buffer) > 0 {
+				r.flushReplies()
+			}
+			r.rb.lock.Unlock()
+		}
+	}()
 }
 
 func (r *PostRepositoryImpl) GetAllPosts(dto models.FilterPostDTO) ([]models.ReadPostDTO, error) {
