@@ -226,7 +226,7 @@ func (r *PostRepositoryImpl) fetchPosts(dto models.FilterPostDTO) ([]models.Read
 	}
 	defer rows.Close()
 
-	var posts []models.ReadPostDTO
+	var posts []models.ReadPostDTO = make([]models.ReadPostDTO, 0)
 	for rows.Next() {
 		var post models.ReadPostDTO
 		var user models.ReadPostUserDTO
