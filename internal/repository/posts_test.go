@@ -348,6 +348,15 @@ func TestPostRepositoryImpl_ViewPost(t *testing.T) {
 					select post_id, user_id, min(created_at) as created_at
 					from tmp_views group by post_id, user_id on conflict (user_id, post_id) do nothing;
 					`)).WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(regexp.QuoteMeta(`
+					update posts set views_count = v.count from (
+						select post_id, count(post_id) as count from views where post_id in (
+							select distinct post_id from tmp_views
+						)
+						group by post_id
+					) v where posts.id = v.post_id;
+					`)).
+					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
 			}
 
@@ -411,6 +420,15 @@ func TestPostRepositoryImpl_LikePost(t *testing.T) {
 					select post_id, user_id, min(created_at) as created_at
 					from tmp_likes group by post_id, user_id on conflict (user_id, post_id) do nothing;
 					`)).WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(regexp.QuoteMeta(`
+					update posts set likes_count = l.count from (
+						select post_id, count(post_id) as count from likes where post_id in (
+							select distinct post_id from tmp_likes
+						)
+						group by post_id
+					) l where posts.id = l.post_id;
+					`)).
+					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
 			}
 
@@ -475,6 +493,17 @@ func TestPostRepositoryImpl_DislikePost(t *testing.T) {
 							select post_id, user_id from tmp_dislikes
 						);
 					`)).WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(regexp.QuoteMeta(`
+					update posts
+						set likes_count = likes_count - l.count
+						from (
+							select post_id, count(post_id) as count
+							from tmp_dislikes
+							group by post_id
+						) l
+						where posts.id = l.post_id;
+					`)).
+					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
 			}
 
