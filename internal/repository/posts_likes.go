@@ -72,18 +72,6 @@ func (r *PostRepositoryImpl) flushLikes() error {
 		return err
 	}
 
-	updateQuery := `
-	update posts set likes_count = l.count from (
-    	select post_id, count(post_id) as count from likes where post_id in (
-			select distinct post_id from tmp_likes
-		)
-		group by post_id
-	) l where posts.id = l.post_id;
-	`
-	if _, err = tx.Exec(updateQuery); err != nil {
-		tx.Rollback()
-		return err
-	}
 	err = tx.Commit()
 	if err != nil {
 		return err
@@ -152,20 +140,6 @@ func (r *PostRepositoryImpl) flushDislikes() error {
 		return err
 	}
 
-	updateQuery := `
-	update posts
-        set likes_count = likes_count - l.count
-        from (
-            select post_id, count(post_id) as count
-            from tmp_dislikes
-            group by post_id
-        ) l
-        where posts.id = l.post_id;
-	`
-	if _, err = tx.Exec(updateQuery); err != nil {
-		tx.Rollback()
-		return err
-	}
 	err = tx.Commit()
 	if err != nil {
 		return err

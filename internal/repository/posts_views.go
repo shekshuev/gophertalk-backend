@@ -66,18 +66,6 @@ func (r *PostRepositoryImpl) flushViews() error {
 		return err
 	}
 
-	updateQuery := `
-	update posts set views_count = v.count from (
-    	select post_id, count(post_id) as count from views where post_id in (
-			select distinct post_id from tmp_views
-		)
-		group by post_id
-	) v where posts.id = v.post_id;
-	`
-	if _, err = tx.Exec(updateQuery); err != nil {
-		tx.Rollback()
-		return err
-	}
 	err = tx.Commit()
 	if err != nil {
 		return err
