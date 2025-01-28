@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/
 WORKDIR /root/
 
 COPY --from=builder /app/gophertalk .
+COPY --from=builder /app/internal/migrations /migrations
 
 EXPOSE 3000
 
