@@ -170,6 +170,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 		u.user_name,
 		u.first_name,
 		u.last_name,
+		u.deleted_at,
 		p.likes_count,
 		p.views_count,
 		p.replies_count
@@ -191,6 +192,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 				"u.user_name",
 				"u.first_name",
 				"u.last_name",
+				"u.deleted_at",
 				"likes_count",
 				"views_count",
 				"replies_count",
@@ -205,6 +207,7 @@ func TestPostRepositoryImpl_GetAllPosts(t *testing.T) {
 					post.User.UserName,
 					post.User.FirstName,
 					post.User.LastName,
+					post.User.DeletedAt,
 					post.LikesCount,
 					post.ViewsCount,
 					post.RepliesCount,

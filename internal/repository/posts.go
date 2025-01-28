@@ -192,6 +192,7 @@ func (r *PostRepositoryImpl) fetchPosts(dto models.FilterPostDTO) ([]models.Read
 			u.user_name,
 			u.first_name,
 			u.last_name,
+			u.deleted_at,
 			p.likes_count,
 			p.views_count,
 			p.replies_count
@@ -239,6 +240,7 @@ func (r *PostRepositoryImpl) fetchPosts(dto models.FilterPostDTO) ([]models.Read
 			&user.UserName,
 			&user.FirstName,
 			&user.LastName,
+			&user.DeletedAt,
 			&post.LikesCount,
 			&post.ViewsCount,
 			&post.RepliesCount,
@@ -247,6 +249,11 @@ func (r *PostRepositoryImpl) fetchPosts(dto models.FilterPostDTO) ([]models.Read
 			return nil, err
 		}
 		post.User = &user
+		if post.User.DeletedAt != nil {
+			post.User.UserName = "deleted"
+			post.User.FirstName = "deleted"
+			post.User.LastName = "deleted"
+		}
 		posts = append(posts, post)
 	}
 	return posts, nil
